@@ -103,6 +103,8 @@ Persistent<String> domain_symbol;
 // declared in node_internals.h
 Persistent<Object> process;
 
+Persistent<Context> g_context;
+
 static Persistent<Function> process_tickFromSpinner;
 static Persistent<Function> process_tickCallback;
 
@@ -3062,12 +3064,12 @@ int Start(int argc, char *argv[]) {
     HandleScope handle_scope;
 
     // Create the one and only Context.
-    Persistent<Context> context = Context::New();
-    Context::Scope context_scope(context);
+    g_context = Context::New();
+    Context::Scope context_scope(g_context);
 
     // Use original argv, as we're just copying values out of it.
     Handle<Object> process_l = SetupProcessObject(argc, argv);
-    v8_typed_array::AttachBindings(context->Global());
+    v8_typed_array::AttachBindings(g_context->Global());
 
     // Create all the objects, load modules, do everything.
     // so your next reading stop should be node::Load()!
@@ -3084,7 +3086,7 @@ int Start(int argc, char *argv[]) {
     RunAtExit();
 
 #ifndef NDEBUG
-    context.Dispose();
+    g_context.Dispose();
 #endif
   }
 

@@ -28,6 +28,8 @@
 
 namespace node {
 
+extern v8::Persistent<v8::Context> g_context;
+
 // Defined in node.cc
 extern v8::Isolate* node_isolate;
 
