@@ -82,6 +82,7 @@ bool Environment::KickNextTick() {
 
   info->set_in_tick(false);
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     info->set_last_threw(true);
     return false;
