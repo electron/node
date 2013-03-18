@@ -201,6 +201,11 @@ static void Spin(uv_idle_t* handle, int status) {
     process_tickFromSpinner = Persistent<Function>::New(cb);
   }
 
+  if (!g_standalone_mode) {
+    process_tickFromSpinner->Call(process, 0, NULL);
+    return;
+  }
+
   TryCatch try_catch;
 
   process_tickFromSpinner->Call(process, 0, NULL);
@@ -1023,14 +1028,18 @@ MakeCallback(const Handle<Object> object,
     process_tickCallback = Persistent<Function>::New(cb);
   }
 
+#if 0
   TryCatch try_catch;
+#endif
 
   Local<Value> ret = callback->Call(object, argc, argv);
 
+#if 0
   if (try_catch.HasCaught()) {
     FatalException(try_catch);
     return Undefined();
   }
+#endif
 
   if (tick_infobox.length == 0) {
     tick_infobox.index = 0;
@@ -1041,10 +1050,12 @@ MakeCallback(const Handle<Object> object,
   // process nextTicks after call
   process_tickCallback->Call(process, 0, NULL);
 
+#if 0
   if (try_catch.HasCaught()) {
     FatalException(try_catch);
     return Undefined();
   }
+#endif
 
   return ret;
 }
