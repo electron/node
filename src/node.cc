@@ -131,6 +131,9 @@ using v8::Uint32Array;
 using v8::V8;
 using v8::Value;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool print_eval = false;
 static bool force_repl = false;
 static bool syntax_check_only = false;
@@ -1160,7 +1163,9 @@ void SetupPromises(const FunctionCallbackInfo<Value>& args) {
 
   CHECK(args[0]->IsFunction());
 
+  if (g_standalone_mode) {  // No indent to minimize diff.
   isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  }
   env->set_promise_reject_function(args[0].As<Function>());
 
   env->process_object()->Delete(
@@ -4213,8 +4218,10 @@ void Init(int* argc,
   // Initialize prog_start_time to get relative uptime.
   prog_start_time = static_cast<double>(uv_now(uv_default_loop()));
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
+  }  // g_upstream_node_mode
 
   // init async debug messages dispatching
   // Main thread uses uv_default_loop
@@ -4243,6 +4250,7 @@ void Init(int* argc,
     config_preserve_symlinks = (*preserve_symlinks == '1');
   }
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Parse a few arguments which are specific to Node.
   int v8_argc;
   const char** v8_argv;
@@ -4295,6 +4303,7 @@ void Init(int* argc,
   if (v8_argc > 1) {
     exit(9);
   }
+  }  // g_upstream_node_mode
 
   // Unconditionally force typed arrays to allocate outside the v8 heap. This
   // is to prevent memory pointers from being moved around that are returned by
@@ -4302,9 +4311,11 @@ void Init(int* argc,
   const char no_typed_array_heap[] = "--typed_array_max_size_in_heap=0";
   V8::SetFlagsFromString(no_typed_array_heap, sizeof(no_typed_array_heap) - 1);
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   if (!use_debug_agent) {
     RegisterDebugSignalHandler();
   }
+  }  // g_upstream_node_mode
 
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be
@@ -4485,10 +4496,14 @@ inline int Start(uv_loop_t* event_loop,
   if (isolate == nullptr)
     return 12;  // Signal internal error.
 
+  if (g_standalone_mode) {  // No indent to minimize diff.
   isolate->AddMessageListener(OnMessage);
+  } // g_standalone_mode
   isolate->SetAbortOnUncaughtExceptionCallback(ShouldAbortOnUncaughtException);
   isolate->SetAutorunMicrotasks(false);
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   isolate->SetFatalErrorHandler(OnFatalError);
+  } // g_upstream_node_mode
 
   if (track_heap_objects) {
     isolate->GetHeapProfiler()->StartTrackingHeapObjects(true);
