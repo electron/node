@@ -180,6 +180,10 @@ namespace node {
 
 NODE_EXTERN extern bool no_deprecation;
 
+// Whether node should open some low level hooks.
+NODE_EXTERN extern bool g_standalone_mode;
+NODE_EXTERN extern bool g_upstream_node_mode;
+
 NODE_EXTERN int Start(int argc, char *argv[]);
 NODE_EXTERN void Init(int* argc,
                       const char** argv,
