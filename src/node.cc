@@ -115,6 +115,9 @@ using v8::Uint32Array;
 using v8::V8;
 using v8::Value;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool print_eval = false;
 static bool force_repl = false;
 static bool trace_deprecation = false;
@@ -993,7 +996,9 @@ void SetupPromises(const FunctionCallbackInfo<Value>& args) {
 
   CHECK(args[0]->IsFunction());
 
+  if (g_standalone_mode) {  // No indent to minimize diff.
   isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  }
   env->set_promise_reject_function(args[0].As<Function>());
 
   env->process_object()->Delete(
@@ -1070,6 +1075,7 @@ Local<Value> MakeCallback(Environment* env,
     }
   }
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     return Undefined(env->isolate());
   }
@@ -2947,8 +2953,12 @@ static void RawDebug(const FunctionCallbackInfo<Value>& args) {
 void LoadEnvironment(Environment* env) {
   HandleScope handle_scope(env->isolate());
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   env->isolate()->SetFatalErrorHandler(node::OnFatalError);
+  }  // g_upstream_node_mode
+  if (g_standalone_mode) {  // No indent to minimize diff.
   env->isolate()->AddMessageListener(OnMessage);
+  }  // g_standalone_mode
 
   // Compile, execute the src/node.js file. (Which was included as static C
   // string in node_natives.h. 'natve_node' is the string containing that
@@ -3598,8 +3608,10 @@ void Init(int* argc,
   // Initialize prog_start_time to get relative uptime.
   prog_start_time = static_cast<double>(uv_now(uv_default_loop()));
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
+  }  // g_upstream_node_mode
 
   // init async debug messages dispatching
   // Main thread uses uv_default_loop
@@ -3615,6 +3627,7 @@ void Init(int* argc,
   V8::SetFlagsFromString(NODE_V8_OPTIONS, sizeof(NODE_V8_OPTIONS) - 1);
 #endif
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Parse a few arguments which are specific to Node.
   int v8_argc;
   const char** v8_argv;
@@ -3672,6 +3685,7 @@ void Init(int* argc,
     const char expose_debug_as[] = "--expose_debug_as=v8debug";
     V8::SetFlagsFromString(expose_debug_as, sizeof(expose_debug_as) - 1);
   }
+  }  // g_upstream_node_mode
 
   // Unconditionally force typed arrays to allocate outside the v8 heap. This
   // is to prevent memory pointers from being moved around that are returned by
@@ -3679,9 +3693,11 @@ void Init(int* argc,
   const char no_typed_array_heap[] = "--typed_array_max_size_in_heap=0";
   V8::SetFlagsFromString(no_typed_array_heap, sizeof(no_typed_array_heap) - 1);
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   if (!use_debug_agent) {
     RegisterDebugSignalHandler();
   }
+  }  // g_upstream_node_mode
 
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be
