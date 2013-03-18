@@ -172,6 +172,9 @@ using v8::Value;
 static Mutex process_mutex;
 static Mutex environ_mutex;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool print_eval = false;
 static bool force_repl = false;
 static bool syntax_check_only = false;
@@ -2896,6 +2899,13 @@ static bool ExecuteBootstrapper(Environment* env, Local<Function> bootstrapper,
 
 
 void LoadEnvironment(Environment* env) {
+  if (g_standalone_mode) {
+    env->isolate()->AddMessageListener(OnMessage);
+  }
+  if (g_upstream_node_mode) {
+    env->isolate()->SetFatalErrorHandler(OnFatalError);
+  }
+
   HandleScope handle_scope(env->isolate());
 
   TryCatch try_catch(env->isolate());
@@ -3800,7 +3810,9 @@ void Init(int* argc,
   RegisterBuiltinModules();
 
   // Make inherited handles noninheritable.
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   uv_disable_stdio_inheritance();
+  }  // g_upstream_node_mode
 
 #if defined(NODE_V8_OPTIONS)
   // Should come before the call to V8::SetFlagsFromCommandLine()
@@ -3864,6 +3876,7 @@ void Init(int* argc,
   }
 #endif
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   ProcessArgv(argc, argv, exec_argc, exec_argv);
 
 #if defined(NODE_HAVE_I18N_SUPPORT)
@@ -3880,6 +3893,7 @@ void Init(int* argc,
     exit(9);
   }
 #endif
+  }  // g_upstream_node_mode
 
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be
