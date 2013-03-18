@@ -64,7 +64,7 @@
   'targets': [
     {
       'target_name': 'node',
-      'type': 'executable',
+      'type': 'static_library',
 
       'dependencies': [
         'node_js2c#host',
@@ -88,7 +88,6 @@
         'src/node_file.cc',
         'src/node_http_parser.cc',
         'src/node_javascript.cc',
-        'src/node_main.cc',
         'src/node_os.cc',
         'src/node_script.cc',
         'src/node_stat_watcher.cc',
