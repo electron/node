@@ -112,6 +112,9 @@ using v8::Uint32Array;
 using v8::V8;
 using v8::Value;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool print_eval = false;
 static bool force_repl = false;
 static bool trace_deprecation = false;
@@ -122,9 +125,9 @@ static bool track_heap_objects = false;
 static const char* eval_string = nullptr;
 static unsigned int preload_module_count = 0;
 static const char** preload_modules = nullptr;
-static bool use_debug_agent = false;
-static bool debug_wait_connect = false;
-static int debug_port = 5858;
+bool use_debug_agent = false;
+bool debug_wait_connect = false;
+int debug_port = 5858;
 static bool v8_is_profiling = false;
 static bool node_is_initialized = false;
 static node_module* modpending;
@@ -145,7 +148,7 @@ static double prog_start_time;
 static bool debugger_running;
 static uv_async_t dispatch_debug_messages_async;
 
-static Isolate* node_isolate = nullptr;
+Isolate* node_isolate = nullptr;
 static v8::Platform* default_platform;
 
 class ArrayBufferAllocator : public ArrayBuffer::Allocator {
@@ -1010,7 +1013,9 @@ void SetupPromises(const FunctionCallbackInfo<Value>& args) {
 
   CHECK(args[0]->IsFunction());
 
+  if (g_standalone_mode) {  // No indent to minimize diff.
   isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  }
   env->set_promise_reject_function(args[0].As<Function>());
 
   env->process_object()->Delete(
@@ -1088,6 +1093,7 @@ Handle<Value> MakeCallback(Environment* env,
     }
   }
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     return Undefined(env->isolate());
   }
@@ -1114,6 +1120,7 @@ Handle<Value> MakeCallback(Environment* env,
 
   tick_info->set_in_tick(false);
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     tick_info->set_last_threw(true);
     return Undefined(env->isolate());
@@ -2993,8 +3000,12 @@ static void RawDebug(const FunctionCallbackInfo<Value>& args) {
 void LoadEnvironment(Environment* env) {
   HandleScope handle_scope(env->isolate());
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   env->isolate()->SetFatalErrorHandler(node::OnFatalError);
+  }  // g_upstream_node_mode
+  if (g_standalone_mode) {  // No indent to minimize diff.
   env->isolate()->AddMessageListener(OnMessage);
+  }  // g_standalone_mode
 
   // Compile, execute the src/node.js file. (Which was included as static C
   // string in node_natives.h. 'natve_node' is the string containing that
@@ -3058,7 +3069,7 @@ void LoadEnvironment(Environment* env) {
 
 static void PrintHelp();
 
-static bool ParseDebugOpt(const char* arg) {
+bool ParseDebugOpt(const char* arg) {
   const char* port = nullptr;
 
   if (!strcmp(arg, "--debug")) {
@@ -3297,7 +3308,7 @@ static void DispatchMessagesDebugAgentCallback(Environment* env) {
 }
 
 
-static void StartDebug(Environment* env, bool wait) {
+void StartDebug(Environment* env, bool wait) {
   CHECK(!debugger_running);
 
   env->debugger_agent()->set_dispatch_handler(
@@ -3312,7 +3323,7 @@ static void StartDebug(Environment* env, bool wait) {
 
 
 // Called from the main thread.
-static void EnableDebug(Environment* env) {
+void EnableDebug(Environment* env) {
   CHECK(debugger_running);
 
   // Send message to enable debug in workers
@@ -3640,8 +3651,10 @@ void Init(int* argc,
   // Initialize prog_start_time to get relative uptime.
   prog_start_time = static_cast<double>(uv_now(uv_default_loop()));
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
+  }  // g_upstream_node_mode
 
   // init async debug messages dispatching
   // Main thread uses uv_default_loop
@@ -3669,6 +3682,7 @@ void Init(int* argc,
   V8::SetFlagsFromString("--novector_ics", sizeof("--novector_ics") - 1);
 #endif
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
 #if defined(NODE_V8_OPTIONS)
   // Should come before the call to V8::SetFlagsFromCommandLine()
   // so the user can disable a flag --foo at run-time by passing
@@ -3718,17 +3732,22 @@ void Init(int* argc,
   if (v8_argc > 1) {
     exit(9);
   }
+  }  // g_upstream_node_mode
 
   if (debug_wait_connect) {
     const char expose_debug_as[] = "--expose_debug_as=v8debug";
     V8::SetFlagsFromString(expose_debug_as, sizeof(expose_debug_as) - 1);
   }
 
+#if 0
   V8::SetArrayBufferAllocator(&ArrayBufferAllocator::the_singleton);
+#endif
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   if (!use_debug_agent) {
     RegisterDebugSignalHandler();
   }
+  }  // g_upstream_node_mode
 
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be
