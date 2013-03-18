@@ -27,10 +27,9 @@
 namespace node {
 
 #define IMMUTABLE_STRING(string_literal)                                \
-  ::node::ImmutableAsciiSource::CreateFromLiteral(                      \
-      string_literal "", sizeof(string_literal) - 1)
+  v8::String::New(string_literal)
 #define BUILTIN_ASCII_ARRAY(array, len)                                 \
-  ::node::ImmutableAsciiSource::CreateFromLiteral(array, len)
+  v8::String::New(array, len)
 
 class ImmutableAsciiSource : public v8::String::ExternalAsciiStringResource {
  public:
