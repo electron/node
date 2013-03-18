@@ -121,6 +121,9 @@ using v8::kExternalUnsignedIntArray;
 QUEUE handle_wrap_queue = { &handle_wrap_queue, &handle_wrap_queue };
 QUEUE req_wrap_queue = { &req_wrap_queue, &req_wrap_queue };
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool print_eval = false;
 static bool force_repl = false;
 static bool trace_deprecation = false;
@@ -916,12 +919,14 @@ Handle<Value> MakeCallback(Environment* env,
     Local<Value> argv[] = { object };
     env->async_listener_load_function()->Call(process, ARRAY_SIZE(argv), argv);
 
+    if (!g_standalone_mode) try_catch.Reset();
     if (try_catch.HasCaught())
       return Undefined(node_isolate);
   }
 
   Local<Value> ret = callback->Call(object, argc, argv);
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     return Undefined(node_isolate);
   }
@@ -930,6 +935,7 @@ Handle<Value> MakeCallback(Environment* env,
     Local<Value> val = object.As<Value>();
     env->async_listener_unload_function()->Call(process, 1, &val);
 
+    if (!g_standalone_mode) try_catch.Reset();
     if (try_catch.HasCaught())
       return Undefined(node_isolate);
   }
@@ -952,6 +958,7 @@ Handle<Value> MakeCallback(Environment* env,
 
   tick_info->set_in_tick(false);
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     tick_info->set_last_threw(true);
     return Undefined(node_isolate);
@@ -3037,6 +3044,7 @@ void Init(int* argc,
   // Initialize prog_start_time to get relative uptime.
   uv_uptime(&prog_start_time);
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
 
@@ -3084,6 +3092,7 @@ void Init(int* argc,
   }
 
   V8::SetArrayBufferAllocator(&ArrayBufferAllocator::the_singleton);
+  }  // g_upstream_node_mode
 
   // Fetch a reference to the main isolate, so we have a reference to it
   // even when we need it to access it from another (debugger) thread.
@@ -3112,15 +3121,20 @@ void Init(int* argc,
       } while (min + 1 < max);
     }
   }
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Ignore SIGPIPE
   RegisterSignalHandler(SIGPIPE, SIG_IGN);
   RegisterSignalHandler(SIGINT, SignalExit);
   RegisterSignalHandler(SIGTERM, SignalExit);
+  }  // g_upstream_node_mode
 #endif  // __POSIX__
 
+  if (g_standalone_mode) {  // No indent to minimize diff.
   V8::SetFatalErrorHandler(node::OnFatalError);
   V8::AddMessageListener(OnMessage);
+  }  // g_standalone_mode
 
+  if (!g_upstream_node_mode) use_debug_agent = false;
   // If the --debug flag was specified then initialize the debug thread.
   if (use_debug_agent) {
     EnableDebug(debug_wait_connect);
