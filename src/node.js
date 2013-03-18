@@ -57,6 +57,12 @@
 
     startup.resolveArgv0();
 
+    // Make it possible to access the global of node.
+    process.global = global;
+    process.NativeModule = NativeModule;
+
+    /* Disable all modes of node.
+
     // There are various modes that Node can run in. The most common two
     // are running from a script and running the REPL - but there are a few
     // others like the debugger or running --eval arguments. Here we decide
@@ -155,6 +161,7 @@
         });
       }
     }
+    */
   }
 
   startup.globalVariables = function() {
