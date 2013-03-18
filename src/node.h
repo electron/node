@@ -152,6 +152,15 @@ namespace node {
 
 NODE_EXTERN extern bool no_deprecation;
 
+// Whether node should open some low level hooks.
+NODE_EXTERN extern bool g_standalone_mode;
+NODE_EXTERN extern bool g_upstream_node_mode;
+// Expose the debug flags.
+NODE_EXTERN extern bool use_debug_agent;
+NODE_EXTERN extern bool debug_wait_connect;
+NODE_EXTERN extern int debug_port;
+NODE_EXTERN extern v8::Isolate* node_isolate;
+
 NODE_EXTERN int Start(int argc, char *argv[]);
 NODE_EXTERN void Init(int* argc,
                       const char** argv,
@@ -183,6 +192,10 @@ NODE_EXTERN Environment* CreateEnvironment(v8::Isolate* isolate,
 NODE_EXTERN void EmitBeforeExit(Environment* env);
 NODE_EXTERN int EmitExit(Environment* env);
 NODE_EXTERN void RunAtExit(Environment* env);
+
+NODE_EXTERN bool ParseDebugOpt(const char* arg);
+NODE_EXTERN void StartDebug(Environment* env, bool wait);
+NODE_EXTERN void EnableDebug(Environment* env);
 
 /* Converts a unixtime to V8 Date */
 #define NODE_UNIXTIME_V8(t) v8::Date::New(v8::Isolate::GetCurrent(),          \
