@@ -353,7 +353,7 @@ Handle<Value> WrappedScript::EvalMachine(const Arguments& args) {
     display_error = true;
   }
 
-  Handle<Context> context = Context::GetCurrent();
+  Handle<Context> context = args.This()->CreationContext();
 
   Local<Array> keys;
   if (context_flag == newContext) {
