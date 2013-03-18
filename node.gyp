@@ -17,6 +17,7 @@
     'node_use_systemtap%': 'false',
     'node_shared_openssl%': 'false',
     'library_files': [
+      'src/cefode.js',
       'src/node.js',
       'lib/_debugger.js',
       'lib/_linklist.js',
