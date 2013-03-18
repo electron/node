@@ -160,6 +160,9 @@ using v8::Value;
 
 using AsyncHooks = node::Environment::AsyncHooks;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool print_eval = false;
 static bool force_repl = false;
 static bool syntax_check_only = false;
@@ -1273,7 +1276,9 @@ void SetupPromises(const FunctionCallbackInfo<Value>& args) {
 
   CHECK(args[0]->IsFunction());
 
+  if (g_standalone_mode) {  // No indent to minimize diff.
   isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  }
   env->set_promise_reject_function(args[0].As<Function>());
 
   env->process_object()->Delete(
@@ -3547,6 +3552,13 @@ static void RawDebug(const FunctionCallbackInfo<Value>& args) {
 
 
 void LoadEnvironment(Environment* env) {
+  if (g_standalone_mode) {
+    env->isolate()->AddMessageListener(OnMessage);
+  }
+  if (g_upstream_node_mode) {
+    env->isolate()->SetFatalErrorHandler(OnFatalError);
+  }
+
   HandleScope handle_scope(env->isolate());
 
   TryCatch try_catch(env->isolate());
@@ -4322,8 +4334,10 @@ void Init(int* argc,
   // Initialize prog_start_time to get relative uptime.
   prog_start_time = static_cast<double>(uv_now(uv_default_loop()));
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
+  }  // g_upstream_node_mode
 
 #if defined(NODE_V8_OPTIONS)
   // Should come before the call to V8::SetFlagsFromCommandLine()
@@ -4381,6 +4395,7 @@ void Init(int* argc,
   }
 #endif
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   ProcessArgv(argc, argv, exec_argc, exec_argv);
 
 #if defined(NODE_HAVE_I18N_SUPPORT)
@@ -4397,6 +4412,7 @@ void Init(int* argc,
     exit(9);
   }
 #endif
+  }  // g_upstream_node_mode
 
   // Unconditionally force typed arrays to allocate outside the v8 heap. This
   // is to prevent memory pointers from being moved around that are returned by
