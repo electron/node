@@ -108,6 +108,9 @@ using v8::V8;
 using v8::Value;
 using v8::kExternalUint32Array;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool print_eval = false;
 static bool force_repl = false;
 static bool trace_deprecation = false;
@@ -1086,6 +1089,7 @@ Handle<Value> MakeCallback(Environment* env,
   env->tick_callback_function()->Call(process, 0, nullptr);
   CHECK_EQ(env->context(), env->isolate()->GetCurrentContext());
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     return Undefined(env->isolate());
   }
@@ -1112,6 +1116,7 @@ Handle<Value> MakeCallback(Environment* env,
 
   tick_info->set_in_tick(false);
 
+  if (!g_standalone_mode) try_catch.Reset();
   if (try_catch.HasCaught()) {
     tick_info->set_last_threw(true);
     return Undefined(env->isolate());
@@ -2881,8 +2886,12 @@ static void RawDebug(const FunctionCallbackInfo<Value>& args) {
 void LoadEnvironment(Environment* env) {
   HandleScope handle_scope(env->isolate());
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   env->isolate()->SetFatalErrorHandler(node::OnFatalError);
+  }  // g_upstream_node_mode
+  if (g_standalone_mode) {  // No indent to minimize diff.
   env->isolate()->AddMessageListener(OnMessage);
+  }  // g_standalone_mode
 
   // Compile, execute the src/node.js file. (Which was included as static C
   // string in node_natives.h. 'natve_node' is the string containing that
@@ -3492,6 +3501,7 @@ void Init(int* argc,
   // Initialize prog_start_time to get relative uptime.
   prog_start_time = static_cast<double>(uv_now(uv_default_loop()));
 
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
 
@@ -3556,12 +3566,15 @@ void Init(int* argc,
     const char expose_debug_as[] = "--expose_debug_as=v8debug";
     V8::SetFlagsFromString(expose_debug_as, sizeof(expose_debug_as) - 1);
   }
+  }  // g_upstream_node_mode
 
+#if 0
   V8::SetArrayBufferAllocator(&ArrayBufferAllocator::the_singleton);
 
   if (!use_debug_agent) {
     RegisterDebugSignalHandler();
   }
+#endif
 
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be

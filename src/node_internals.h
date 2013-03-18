@@ -17,6 +17,10 @@ namespace node {
 // Forward declaration
 class Environment;
 
+// Whether node should open some low level hooks.
+extern bool g_standalone_mode;
+extern bool g_upstream_node_mode;
+
 // If persistent.IsWeak() == false, then do not call persistent.Reset()
 // while the returned Local<T> is still in scope, it will destroy the
 // reference to the object.
