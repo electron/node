@@ -36,6 +36,10 @@ struct sockaddr;
 
 namespace node {
 
+// Whether node should open some low level hooks.
+extern bool g_standalone_mode;
+extern bool g_upstream_node_mode;
+
 // Defined in node.cc
 extern v8::Isolate* node_isolate;
 
