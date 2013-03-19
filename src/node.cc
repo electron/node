@@ -103,6 +103,8 @@ Persistent<String> domain_symbol;
 // declared in node_internals.h
 Persistent<Object> process;
 
+bool g_standalone_mode = false;
+
 Persistent<Context> g_context;
 
 static Persistent<Function> process_tickFromSpinner;
@@ -1028,18 +1030,20 @@ MakeCallback(const Handle<Object> object,
     process_tickCallback = Persistent<Function>::New(cb);
   }
 
-#if 0
+  if (!g_standalone_mode) {
+    Local<Value> ret = callback->Call(object, argc, argv);
+    process_tickCallback->Call(process, 0, NULL);
+    return ret;
+  }
+
   TryCatch try_catch;
-#endif
 
   Local<Value> ret = callback->Call(object, argc, argv);
 
-#if 0
   if (try_catch.HasCaught()) {
     FatalException(try_catch);
     return Undefined();
   }
-#endif
 
   if (tick_infobox.length == 0) {
     tick_infobox.index = 0;
@@ -1050,12 +1054,10 @@ MakeCallback(const Handle<Object> object,
   // process nextTicks after call
   process_tickCallback->Call(process, 0, NULL);
 
-#if 0
   if (try_catch.HasCaught()) {
     FatalException(try_catch);
     return Undefined();
   }
-#endif
 
   return ret;
 }
@@ -2908,6 +2910,8 @@ char** Init(int argc, char *argv[]) {
   // Initialize prog_start_time to get relative uptime.
   uv_uptime(&prog_start_time);
 
+#if 0
+
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
 
@@ -2951,18 +2955,23 @@ char** Init(int argc, char *argv[]) {
   RegisterSignalHandler(SIGTERM, SignalExit);
 #endif // __POSIX__
 
+#endif
+
   uv_idle_init(uv_default_loop(), &tick_spinner);
 
   uv_check_init(uv_default_loop(), &check_immediate_watcher);
   uv_unref((uv_handle_t*) &check_immediate_watcher);
   uv_idle_init(uv_default_loop(), &idle_immediate_dummy);
 
-  V8::SetFatalErrorHandler(node::OnFatalError);
+  if (g_standalone_mode) {
+    V8::SetFatalErrorHandler(node::OnFatalError);
+  }
 
   // Fetch a reference to the main isolate, so we have a reference to it
   // even when we need it to access it from another (debugger) thread.
   node_isolate = Isolate::GetCurrent();
 
+#if 0
   // If the --debug flag was specified then initialize the debug thread.
   if (use_debug_agent) {
     EnableDebug(debug_wait_connect);
@@ -2976,6 +2985,7 @@ char** Init(int argc, char *argv[]) {
     uv_unref((uv_handle_t*)&signal_watcher);
 #endif // __POSIX__
   }
+#endif
 
   return argv;
 }
