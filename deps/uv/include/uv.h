@@ -1461,6 +1461,8 @@ union uv_any_req {
 struct uv_loop_s {
   /* User data - use this for whatever. */
   void* data;
+  /* Callback when loop's watcher queue updates. */
+  void (*on_watcher_queue_updated)(uv_loop_t*);
   /* Loop reference counting. */
   unsigned int active_handles;
   void* handle_queue[2];
