@@ -655,8 +655,11 @@ void uv__io_start(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
   }
 #endif
 
-  if (ngx_queue_empty(&w->watcher_queue))
+  if (ngx_queue_empty(&w->watcher_queue)) {
     ngx_queue_insert_tail(&loop->watcher_queue, &w->watcher_queue);
+    if (loop->on_watcher_queue_updated)
+      loop->on_watcher_queue_updated(loop);
+  }
 
   if (loop->watchers[w->fd] == NULL) {
     loop->watchers[w->fd] = w;
@@ -692,8 +695,11 @@ void uv__io_stop(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
       w->events = 0;
     }
   }
-  else if (ngx_queue_empty(&w->watcher_queue))
+  else if (ngx_queue_empty(&w->watcher_queue)) {
     ngx_queue_insert_tail(&loop->watcher_queue, &w->watcher_queue);
+    if (loop->on_watcher_queue_updated)
+      loop->on_watcher_queue_updated(loop);
+  }
 }
 
 

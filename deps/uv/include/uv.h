@@ -1969,6 +1969,8 @@ union uv_any_req {
 struct uv_loop_s {
   /* User data - use this for whatever. */
   void* data;
+  /* Callback when loop's watcher queue updates */
+  void (*on_watcher_queue_updated)(uv_loop_t*);
   /* The last error */
   uv_err_t last_err;
   /* Loop reference counting */
