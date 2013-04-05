@@ -153,7 +153,7 @@ v8::Local<v8::Object> BuildStatsObject(const uv_statbuf_t* s);
 static inline v8::Persistent<v8::Function>* cb_persist(
     const v8::Local<v8::Value> &v) {
   v8::Persistent<v8::Function> *fn = new v8::Persistent<v8::Function>();
-  *fn = v8::Persistent<v8::Function>::New(v8::Local<v8::Function>::Cast(v));
+  *fn = v8::Persistent<v8::Function>::New(node_isolate, v8::Local<v8::Function>::Cast(v));
   return fn;
 }
 
@@ -165,7 +165,7 @@ static inline v8::Persistent<v8::Function>* cb_unwrap(void *data) {
 }
 
 static inline void cb_destroy(v8::Persistent<v8::Function> * cb) {
-  cb->Dispose();
+  cb->Dispose(node_isolate);
   delete cb;
 }
 
