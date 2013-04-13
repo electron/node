@@ -61,6 +61,26 @@
     process.global = global;
     process.NativeModule = NativeModule;
 
+    // Set path to the resources directory.
+    if (process.__atom_type == 'browser') {
+      var path = NativeModule.require('path');
+      process.resourcesPath = process.platform == 'darwin' ?
+          path.join(process.execPath, '..', '..', 'Resources') :
+          path.join(process.execPath, '..', 'resources');
+
+      var script = path.join(process.resourcesPath, 'browser', 'atom', 'atom.js');
+
+      // Load browser/atom/atom.js if in browser process.
+      var Module = NativeModule.require('module');
+      Module.runMain(script);
+    } else {
+      var path = NativeModule.require('path');
+      process.resourcesPath = process.platform == 'darwin' ?
+          path.join(process.execPath, '..', '..', '..', '..', '..', 'Resources') :
+          path.join(process.execPath, '..', 'resources');
+    }
+
+
     /* Disable all modes of node.
 
     // There are various modes that Node can run in. The most common two
