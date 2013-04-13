@@ -2320,6 +2320,7 @@ Handle<Object> SetupProcessObject(int argc, char *argv[]) {
   process->Set(String::NewSymbol("platform"), String::New(PLATFORM));
 
   // process.argv
+  option_end_index = 1;
   Local<Array> arguments = Array::New(argc - option_end_index + 1);
   arguments->Set(Integer::New(0), String::New(argv[0]));
   for (j = 1, i = option_end_index; i < argc; j++, i++) {
