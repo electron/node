@@ -26,6 +26,7 @@
 #include "v8_typed_array.h"
 #include "v8_typed_array_bswap.h"
 #include "node_buffer.h"
+#include "node_internals.h"
 #include "node.h"
 #include "v8.h"
 
@@ -69,7 +70,7 @@ class ArrayBuffer {
   }
 
  private:
-  static void WeakCallback(v8::Persistent<v8::Value> value, void* data) {
+  static void WeakCallback(v8::Isolate*, v8::Persistent<v8::Value> value, void* data) {
     v8::Object* obj = v8::Object::Cast(*value);
 
     void* ptr = obj->GetIndexedPropertiesExternalArrayData();
@@ -125,7 +126,7 @@ class ArrayBuffer {
 
     v8::Persistent<v8::Object> persistent =
         v8::Persistent<v8::Object>::New(args.This());
-    persistent.MakeWeak(NULL, &ArrayBuffer::WeakCallback);
+    persistent.MakeWeak(node::node_isolate, NULL, &ArrayBuffer::WeakCallback);
 
     return args.This();
   }
