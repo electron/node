@@ -75,6 +75,7 @@
         'src',
         'tools/msvs/genfiles',
         'deps/uv/src/ares',
+        '../brightray/vendor/download/libchromiumcontent/src/v8/include',
         '<(SHARED_INTERMEDIATE_DIR)' # for node_natives.h
       ],
 
@@ -83,6 +84,7 @@
           'src',
           'deps/uv/include',
           'deps/http_parser',
+          '../brightray/vendor/download/libchromiumcontent/src/v8/include',
         ],
       },
 
