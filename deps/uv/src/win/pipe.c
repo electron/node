@@ -30,6 +30,11 @@
 #include "stream-inl.h"
 #include "req-inl.h"
 
+#undef min
+#undef max
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+
 
 /* A zero-size buffer for use by uv_pipe_read */
 static char uv_zero_[] = "";
