@@ -11,19 +11,23 @@
   // Every window should has its own process object.
   global.process = {};
   global.process.__proto__ = process;
-  global.process.nextTick = function(callback) { setTimeout(callback, 0); };
+
+  // Add setImmediate.
+  global.setImmediate = function() {
+    var t = NativeModule.require('timers');
+    return t.setImmediate.apply(this, arguments);
+  };
+  global.clearImmediate = function() {
+    var t = NativeModule.require('timers');
+    return t.clearImmediate.apply(this, arguments);
+  };
+  global.process.nextTick = global.setImmediate;
 
   // Inject globals.
   global.global = global;
   global.GLOBAL = global;
   global.root = global;
   global.Buffer = NativeModule.require('buffer').Buffer;
-
-  // Add setImmediate.
-  global.setImmediate = function(func, args) {
-    return setTimeout(func, 0, args);
-  };
-  global.clearImmediate = clearTimeout;
 
   // Force use module.js in window context, so required third party code will
   // run under window context.
