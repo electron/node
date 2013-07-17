@@ -14,6 +14,7 @@
 
   // Add setImmediate.
   global.setImmediate = function() {
+    global.process.activateUvLoop();
     var t = NativeModule.require('timers');
     return t.setImmediate.apply(this, arguments);
   };
