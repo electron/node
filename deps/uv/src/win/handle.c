@@ -52,7 +52,11 @@ uv_handle_type uv_guess_handle(uv_file file) {
       return UV_FILE;
 
     default:
+#if defined(_WIN32)
+      return UV_FILE;
+#else
       return UV_UNKNOWN_HANDLE;
+#endif
   }
 }
 
