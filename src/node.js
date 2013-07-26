@@ -65,8 +65,8 @@
     if (process.__atom_type == 'browser') {
       var path = NativeModule.require('path');
       process.resourcesPath = process.platform == 'darwin' ?
-          path.join(process.execPath, '..', '..', 'Resources') :
-          path.join(process.execPath, '..', 'resources');
+          path.resolve(process.execPath, '..', '..', 'Resources') :
+          path.resolve(process.execPath, '..', 'resources');
 
       var script = path.join(process.resourcesPath, 'browser', 'atom', 'atom.js');
 
@@ -76,8 +76,8 @@
     } else {
       var path = NativeModule.require('path');
       process.resourcesPath = process.platform == 'darwin' ?
-          path.join(process.execPath, '..', '..', '..', '..', '..', 'Resources') :
-          path.join(process.execPath, '..', 'resources');
+          path.resolve(process.execPath, '..', '..', '..', '..', '..', 'Resources') :
+          path.resolve(process.execPath, '..', 'resources');
     }
 
 
