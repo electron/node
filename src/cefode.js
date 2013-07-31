@@ -8,6 +8,10 @@
   // pages share the same built-in module code.
   var NativeModule = process.NativeModule;
 
+  // Redirect process.stdio not to use node's implementation.
+  if (process.platform == 'win32')
+    process.stdout.write = process.stderr.write = process.log
+
   // Every window should has its own process object.
   global.process = {};
   global.process.__proto__ = process;
