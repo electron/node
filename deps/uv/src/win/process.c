@@ -950,6 +950,9 @@ int uv_spawn(uv_loop_t* loop, uv_process_t* process,
     process_flags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
   }
 
+  /* Don't create console window. */
+  process_flags |= CREATE_NO_WINDOW;  
+
   if (CreateProcessW(application_path,
                      arguments,
                      NULL,
