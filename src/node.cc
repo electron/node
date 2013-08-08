@@ -103,7 +103,7 @@ Persistent<String> domain_symbol;
 // declared in node_internals.h
 Persistent<Object> process;
 
-bool g_standalone_mode = false;
+bool g_standalone_mode = true;
 
 Persistent<Context> g_context;
 

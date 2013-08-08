@@ -73,11 +73,30 @@
       // Load browser/atom/atom.js if in browser process.
       var Module = NativeModule.require('module');
       Module.runMain(script);
-    } else {
+    } else if (process.__atom_type == 'renderer') {
       var path = NativeModule.require('path');
       process.resourcesPath = process.platform == 'darwin' ?
           path.resolve(process.execPath, '..', '..', '..', '..', '..', 'Resources') :
           path.resolve(process.execPath, '..', 'resources');
+    } else {
+      // make process.argv[1] into a full path
+      var path = NativeModule.require('path');
+      process.argv[1] = path.resolve(process.argv[1]);
+
+      // If this is a worker in cluster mode, start up the communiction
+      // channel.
+      if (process.env.NODE_UNIQUE_ID) {
+        var cluster = NativeModule.require('cluster');
+        cluster._setupWorker();
+
+        // Make sure it's not accidentally inherited by child processes.
+        delete process.env.NODE_UNIQUE_ID;
+      }
+
+      var Module = NativeModule.require('module');
+
+      // Main entry point into most programs:
+      Module.runMain();
     }
 
 
