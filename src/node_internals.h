@@ -30,6 +30,7 @@ namespace node {
 
 // Whether node should open some low level hooks.
 extern bool g_standalone_mode;
+extern bool g_upstream_node_mode;
 
 extern v8::Persistent<v8::Context> g_context;
 
