@@ -104,6 +104,7 @@ Persistent<String> domain_symbol;
 Persistent<Object> process;
 
 bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
 
 Persistent<Context> g_context;
 
@@ -2320,7 +2321,8 @@ Handle<Object> SetupProcessObject(int argc, char *argv[]) {
   process->Set(String::NewSymbol("platform"), String::New(PLATFORM));
 
   // process.argv
-  option_end_index = 1;
+  if (!g_upstream_node_mode)
+    option_end_index = 1;
   Local<Array> arguments = Array::New(argc - option_end_index + 1);
   arguments->Set(Integer::New(0), String::New(argv[0]));
   for (j = 1, i = option_end_index; i < argc; j++, i++) {
@@ -2911,7 +2913,7 @@ char** Init(int argc, char *argv[]) {
   // Initialize prog_start_time to get relative uptime.
   uv_uptime(&prog_start_time);
 
-#if 0
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
 
   // Make inherited handles noninheritable.
   uv_disable_stdio_inheritance();
@@ -2956,7 +2958,7 @@ char** Init(int argc, char *argv[]) {
   RegisterSignalHandler(SIGTERM, SignalExit);
 #endif // __POSIX__
 
-#endif
+  }  // g_upstream_node_mode
 
   uv_idle_init(uv_default_loop(), &tick_spinner);
 
@@ -2972,7 +2974,8 @@ char** Init(int argc, char *argv[]) {
   // even when we need it to access it from another (debugger) thread.
   node_isolate = Isolate::GetCurrent();
 
-#if 0
+  if (g_upstream_node_mode) {  // No indent to minimize diff.
+
   // If the --debug flag was specified then initialize the debug thread.
   if (use_debug_agent) {
     EnableDebug(debug_wait_connect);
@@ -2986,7 +2989,8 @@ char** Init(int argc, char *argv[]) {
     uv_unref((uv_handle_t*)&signal_watcher);
 #endif // __POSIX__
   }
-#endif
+
+  }  // g_upstream_node_mode
 
   return argv;
 }
