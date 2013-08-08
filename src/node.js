@@ -78,7 +78,10 @@
       process.resourcesPath = process.platform == 'darwin' ?
           path.resolve(process.execPath, '..', '..', '..', '..', '..', 'Resources') :
           path.resolve(process.execPath, '..', 'resources');
-    } else {
+    } else if (process._eval != null) {
+      // User passed '-e' or '--eval' arguments to Node.
+      evalScript('[eval]');
+    } else if (process.argv[1]) {
       // make process.argv[1] into a full path
       var path = NativeModule.require('path');
       process.argv[1] = path.resolve(process.argv[1]);
@@ -97,6 +100,9 @@
 
       // Main entry point into most programs:
       Module.runMain();
+    } else {
+      console.error('We do not accept input from stdin.');
+      process.exit(1);
     }
 
 
