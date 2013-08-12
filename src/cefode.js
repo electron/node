@@ -40,10 +40,12 @@
   source = NativeModule.wrap(source);
 
   var modulejs = new NativeModule('module');
+  modulejs.cache();
+
   var fn = runInThisContext(source, modulejs.filename, true);
   fn(modulejs.exports, NativeModule.require, modulejs, modulejs.filename);
 
-  var Module = modulejs.exports
+  var Module = modulejs.exports;
 
   // Emulate node.js script's execution everionment
   var module = new Module('.', null);
