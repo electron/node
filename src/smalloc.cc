@@ -616,7 +616,9 @@ void Initialize(Handle<Object> exports,
                Uint32::NewFromUnsigned(env->isolate(), kMaxType));
 
   HeapProfiler* heap_profiler = env->isolate()->GetHeapProfiler();
+#if 0
   heap_profiler->SetWrapperClassInfoProvider(ALLOC_ID, WrapperInfo);
+#endif
 }
 
 
