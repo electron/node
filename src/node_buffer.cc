@@ -680,7 +680,9 @@ void Buffer::Initialize(Handle<Object> target) {
   target->Set(String::NewSymbol("setFastBufferConstructor"),
               FunctionTemplate::New(SetFastBufferConstructor)->GetFunction());
 
+#if 0
   HeapProfiler::DefineWrapperClass(BUFFER_CLASS_ID, WrapperInfo);
+#endif
 }
 
 
