@@ -85,8 +85,6 @@ Handle<Object> Buffer::New(Handle<String> string) {
 
 
 Buffer* Buffer::New(size_t length) {
-  HandleScope scope;
-
   Local<Value> arg = Integer::NewFromUnsigned(length);
   Local<Object> b = constructor_template->GetFunction()->NewInstance(1, &arg);
   if (b.IsEmpty()) return NULL;
@@ -96,8 +94,6 @@ Buffer* Buffer::New(size_t length) {
 
 
 Buffer* Buffer::New(const char* data, size_t length) {
-  HandleScope scope;
-
   Local<Value> arg = Integer::NewFromUnsigned(0);
   Local<Object> obj = constructor_template->GetFunction()->NewInstance(1, &arg);
 
@@ -110,8 +106,6 @@ Buffer* Buffer::New(const char* data, size_t length) {
 
 Buffer* Buffer::New(char *data, size_t length,
                     free_callback callback, void *hint) {
-  HandleScope scope;
-
   Local<Value> arg = Integer::NewFromUnsigned(0);
   Local<Object> obj = constructor_template->GetFunction()->NewInstance(1, &arg);
 
