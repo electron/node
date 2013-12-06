@@ -446,6 +446,21 @@ static void Stat(const FunctionCallbackInfo<Value>& args) {
   }
 }
 
+static void StatNoException(const FunctionCallbackInfo<Value>& args) {
+  Environment* env = Environment::GetCurrent(args.GetIsolate());
+  HandleScope scope(env->isolate());
+
+  String::Utf8Value path(args[0]);
+
+  fs_req_wrap req_wrap;
+  int result = uv_fs_stat(uv_default_loop(), &req_wrap.req, *path, NULL);
+  if (result < 0)
+    args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
+  else
+    args.GetReturnValue().Set(
+        BuildStatsObject(env, static_cast<const uv_stat_t*>(SYNC_REQ.ptr)));
+}
+
 static void LStat(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args.GetIsolate());
   HandleScope scope(env->isolate());
@@ -464,6 +479,21 @@ static void LStat(const FunctionCallbackInfo<Value>& args) {
     args.GetReturnValue().Set(
         BuildStatsObject(env, static_cast<const uv_stat_t*>(SYNC_REQ.ptr)));
   }
+}
+
+static void LStatNoException(const FunctionCallbackInfo<Value>& args) {
+  Environment* env = Environment::GetCurrent(args.GetIsolate());
+  HandleScope scope(env->isolate());
+
+  String::Utf8Value path(args[0]);
+
+  fs_req_wrap req_wrap;
+  int result = uv_fs_lstat(uv_default_loop(), &req_wrap.req, *path, NULL);
+  if (result < 0)
+    args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
+  else
+    args.GetReturnValue().Set(
+        BuildStatsObject(env, static_cast<const uv_stat_t*>(SYNC_REQ.ptr)));
 }
 
 static void FStat(const FunctionCallbackInfo<Value>& args) {
@@ -1143,6 +1173,8 @@ void InitFs(Handle<Object> target,
   NODE_SET_METHOD(target, "mkdir", MKDir);
   NODE_SET_METHOD(target, "readdir", ReadDir);
   NODE_SET_METHOD(target, "stat", Stat);
+  NODE_SET_METHOD(target, "statNoException", StatNoException);
+  NODE_SET_METHOD(target, "lstatNoException", LStatNoException);
   NODE_SET_METHOD(target, "lstat", LStat);
   NODE_SET_METHOD(target, "fstat", FStat);
   NODE_SET_METHOD(target, "link", Link);
