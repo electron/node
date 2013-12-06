@@ -401,6 +401,20 @@ static Handle<Value> LStat(const Arguments& args) {
   }
 }
 
+static Handle<Value> LStatNoException(const Arguments& args) {
+  HandleScope scope;
+
+  String::Utf8Value path(args[0]);
+
+  fs_req_wrap req_wrap;
+  int result = uv_fs_lstat(uv_default_loop(), &req_wrap.req, *path, NULL);
+  if (result < 0)
+    return scope.Close(Boolean::New(false));
+
+  return scope.Close(
+      BuildStatsObject(static_cast<const uv_statbuf_t*>(SYNC_REQ.ptr)));
+}
+
 static Handle<Value> FStat(const Arguments& args) {
   HandleScope scope;
 
@@ -945,6 +959,7 @@ void File::Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "readdir", ReadDir);
   NODE_SET_METHOD(target, "stat", Stat);
   NODE_SET_METHOD(target, "statNoException", StatNoException);
+  NODE_SET_METHOD(target, "lstatNoException", LStatNoException);
   NODE_SET_METHOD(target, "lstat", LStat);
   NODE_SET_METHOD(target, "fstat", FStat);
   NODE_SET_METHOD(target, "link", Link);
