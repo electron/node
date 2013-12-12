@@ -145,6 +145,9 @@ static uv_async_t dispatch_debug_messages_async;
 // Declared in node_internals.h
 Isolate* node_isolate = NULL;
 
+// Declared in env-inl.h
+uv_key_t node_isolate_key;
+
 
 class ArrayBufferAllocator : public ArrayBuffer::Allocator {
  public:
@@ -3088,6 +3091,9 @@ void Init(int* argc,
   // Fetch a reference to the main isolate, so we have a reference to it
   // even when we need it to access it from another (debugger) thread.
   node_isolate = Isolate::GetCurrent();
+
+  // Initialize the thread local key which would be used by IsolateData.
+  uv_key_create(&node_isolate_key);
 
 #ifdef __POSIX__
   // Raise the open file descriptor limit.
