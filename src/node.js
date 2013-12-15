@@ -42,23 +42,29 @@
     // Setup the tracing module
     NativeModule.require('tracing')._nodeInitialization(process);
 
+    var isRenderer = process.argv[2] == '--type=renderer';
+
     // do this good and early, since it handles errors.
     startup.processFatal();
 
     startup.globalVariables();
+    if (!isRenderer) {  // No indent to minimize diff.
     startup.globalTimeouts();
     startup.globalConsole();
+    }  // not isRenderer
 
     startup.processAssert();
     startup.processConfig();
     startup.processNextTick();
     startup.processStdio();
     startup.processKillAndExit();
+    if (!isRenderer) {  // No indent to minimize diff.
     startup.processSignalHandlers();
 
     startup.processChannel();
 
     startup.processRawDebug();
+    }  // not isRenderer
 
     startup.resolveArgv0();
 
