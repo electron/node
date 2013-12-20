@@ -77,6 +77,28 @@
       'type': 'executable',
 
       'dependencies': [
+        'node_lib',
+      ],
+
+      'sources': [
+        'src/node_main.cc',
+      ],
+
+      'msvs_settings': {
+        'VCLinkerTool': {
+          'SubSystem': 1, # /subsystem:console
+        },
+        'VCManifestTool': {
+          'EmbedManifest': 'true',
+          'AdditionalManifestFiles': 'src/res/node.exe.extra.manifest'
+        }
+      },
+    },
+    {
+      'target_name': 'node_lib',
+      'type': 'static_library',
+
+      'dependencies': [
         'node_js2c#host',
         'deps/cares/cares.gyp:cares'
       ],
@@ -101,7 +123,6 @@
         'src/node_file.cc',
         'src/node_http_parser.cc',
         'src/node_javascript.cc',
-        'src/node_main.cc',
         'src/node_os.cc',
         'src/node_v8.cc',
         'src/node_v8_platform.cc',
@@ -170,6 +191,17 @@
         'NODE_V8_OPTIONS="<(node_v8_options)"',
         'NODE_WANT_INTERNALS=1',
       ],
+
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'src',
+          'deps/uv/src/ares',
+          'deps/debugger-agent/include',
+        ],
+        'defines': [
+          'NODE_WANT_INTERNALS=1',
+        ],
+      },
 
       'conditions': [
         [ 'v8_enable_i18n_support==1', {
@@ -304,18 +336,22 @@
             'deps/v8/include/v8-debug.h',
           ],
           'dependencies': [ 'deps/v8/tools/gyp/v8.gyp:v8' ],
+          'export_dependent_settings': [ 'deps/v8/tools/gyp/v8.gyp:v8' ],
         }],
 
         [ 'node_shared_zlib=="false"', {
           'dependencies': [ 'deps/zlib/zlib.gyp:zlib' ],
+          'export_dependent_settings': [ 'deps/zlib/zlib.gyp:zlib' ],
         }],
 
         [ 'node_shared_http_parser=="false"', {
           'dependencies': [ 'deps/http_parser/http_parser.gyp:http_parser' ],
+          'export_dependent_settings': [ 'deps/http_parser/http_parser.gyp:http_parser' ],
         }],
 
         [ 'node_shared_libuv=="false"', {
           'dependencies': [ 'deps/uv/uv.gyp:libuv' ],
+          'export_dependent_settings': [ 'deps/uv/uv.gyp:libuv' ],
         }],
 
         [ 'OS=="win"', {
@@ -377,15 +413,6 @@
             ],
         }],
       ],
-      'msvs_settings': {
-        'VCLinkerTool': {
-          'SubSystem': 1, # /subsystem:console
-        },
-        'VCManifestTool': {
-          'EmbedManifest': 'true',
-          'AdditionalManifestFiles': 'src/res/node.exe.extra.manifest'
-        }
-      },
     },
     # generate ETW header and resource files
     {
