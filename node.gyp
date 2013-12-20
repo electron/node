@@ -80,6 +80,28 @@
       'type': 'executable',
 
       'dependencies': [
+        'node',
+      ],
+
+      'sources': [
+        'src/node_main.cc',
+      ],
+
+      'msvs_settings': {
+        'VCLinkerTool': {
+          'SubSystem': 1, # /subsystem:console
+        },
+        'VCManifestTool': {
+          'EmbedManifest': 'true',
+          'AdditionalManifestFiles': 'src/res/node.exe.extra.manifest'
+        }
+      },
+    },
+    {
+      'target_name': 'node',
+      'type': 'shared_library',
+
+      'dependencies': [
         'node_js2c#host',
         'deps/cares/cares.gyp:cares'
       ],
@@ -105,7 +127,6 @@
         'src/node_file.cc',
         'src/node_http_parser.cc',
         'src/node_javascript.cc',
-        'src/node_main.cc',
         'src/node_os.cc',
         'src/node_v8.cc',
         'src/node_v8_platform.cc',
@@ -178,6 +199,17 @@
         'NODE_V8_OPTIONS="<(node_v8_options)"',
         'NODE_WANT_INTERNALS=1',
       ],
+
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'src',
+          'deps/uv/src/ares',
+          'deps/debugger-agent/include',
+        ],
+        'defines': [
+          'NODE_WANT_INTERNALS=1',
+        ],
+      },
 
       'conditions': [
         [ 'v8_enable_i18n_support==1', {
@@ -389,12 +421,6 @@
             ],
         }],
       ],
-      'msvs_settings': {
-        'VCManifestTool': {
-          'EmbedManifest': 'true',
-          'AdditionalManifestFiles': 'src/res/node.exe.extra.manifest'
-        }
-      },
     },
     # generate ETW header and resource files
     {
