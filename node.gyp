@@ -108,8 +108,8 @@
 
       'dependencies': [
         'node_js2c#host',
-        'deps/v8/tools/gyp/v8.gyp:v8',
-        'deps/v8/tools/gyp/v8.gyp:v8_libplatform'
+        # 'deps/v8/tools/gyp/v8.gyp:v8',
+        # 'deps/v8/tools/gyp/v8.gyp:v8_libplatform'
       ],
 
       'include_dirs': [
@@ -117,7 +117,7 @@
         'tools/msvs/genfiles',
         'deps/uv/src/ares',
         '<(SHARED_INTERMEDIATE_DIR)', # for node_natives.h
-        'deps/v8' # include/v8_platform.h
+        # 'deps/v8' # include/v8_platform.h
       ],
 
       'sources': [
@@ -269,29 +269,6 @@
             [ 'node_shared_openssl=="false"', {
               'dependencies': [
                 './deps/openssl/openssl.gyp:openssl',
-
-                # For tests
-                './deps/openssl/openssl.gyp:openssl-cli',
-              ],
-              # Do not let unused OpenSSL symbols to slip away
-              'conditions': [
-                # -force_load or --whole-archive are not applicable for
-                # the static library
-                [ 'node_target_type!="static_library"', {
-                  'xcode_settings': {
-                    'OTHER_LDFLAGS': [
-                      '-Wl,-force_load,<(PRODUCT_DIR)/<(OPENSSL_PRODUCT)',
-                    ],
-                  },
-                  'conditions': [
-                    ['OS in "linux freebsd"', {
-                      'ldflags': [
-                        '-Wl,--whole-archive <(PRODUCT_DIR)/<(OPENSSL_PRODUCT)',
-                        '-Wl,--no-whole-archive',
-                      ],
-                    }],
-                  ],
-                }],
               ],
             }]]
         }, {
@@ -463,12 +440,6 @@
           'ldflags': [ '-Wl,-M,/usr/lib/ld/map.noexstk' ],
         }],
       ],
-      'msvs_settings': {
-        'VCManifestTool': {
-          'EmbedManifest': 'true',
-          'AdditionalManifestFiles': 'src/res/node.exe.extra.manifest'
-        }
-      },
     },
     # generate ETW header and resource files
     {
@@ -691,8 +662,8 @@
       'type': 'executable',
       'dependencies': [
         'deps/gtest/gtest.gyp:gtest',
-        'deps/v8/tools/gyp/v8.gyp:v8',
-        'deps/v8/tools/gyp/v8.gyp:v8_libplatform'
+        # 'deps/v8/tools/gyp/v8.gyp:v8',
+        # 'deps/v8/tools/gyp/v8.gyp:v8_libplatform'
       ],
       'include_dirs': [
         'src',
