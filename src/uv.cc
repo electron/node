@@ -42,6 +42,8 @@ void ErrName(const FunctionCallbackInfo<Value>& args) {
   if (err >= 0)
     return ThrowError("err >= 0");
   const char* name = uv_err_name(err);
+  if (name == NULL)
+    return ThrowError("Unknow system error");
   args.GetReturnValue().Set(OneByteString(node_isolate, name));
 }
 
