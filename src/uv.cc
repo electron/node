@@ -39,6 +39,8 @@ void ErrName(const FunctionCallbackInfo<Value>& args) {
   int err = args[0]->Int32Value();
   CHECK_LT(err, 0);
   const char* name = uv_err_name(err);
+  if (name == NULL)
+    name = "UnknownSystemError";
   args.GetReturnValue().Set(OneByteString(env->isolate(), name));
 }
 
