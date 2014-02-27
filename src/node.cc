@@ -735,7 +735,11 @@ Local<Value> UVException(int errorno,
   if (!msg || !msg[0])
     msg = uv_strerror(errorno);
 
-  Local<String> estring = OneByteString(node_isolate, uv_err_name(errorno));
+  const char* err_name = uv_err_name(errorno);
+  if (err_name == NULL)
+    err_name = "UnknownSystemError";
+
+  Local<String> estring = OneByteString(node_isolate, err_name);
   Local<String> message = OneByteString(node_isolate, msg);
   Local<String> cons1 =
       String::Concat(estring, FIXED_ONE_BYTE_STRING(node_isolate, ", "));
