@@ -431,7 +431,7 @@ class Environment {
 #undef V
 
  private:
-  static const int kIsolateSlot = 0;
+  static const int kIsolateSlot = 3;
 
   class GCInfo;
   class IsolateData;
