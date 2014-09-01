@@ -3104,6 +3104,7 @@ static void DispatchMessagesDebugAgentCallback() {
 
 // Called from the main thread.
 static void EnableDebug(Isolate* isolate, bool wait_connect) {
+#if 0
   assert(debugger_running == false);
   Isolate::Scope isolate_scope(isolate);
   HandleScope handle_scope(isolate);
@@ -3139,6 +3140,7 @@ static void EnableDebug(Isolate* isolate, bool wait_connect) {
     message
   };
   MakeCallback(env, env->process_object(), "emit", ARRAY_SIZE(argv), argv);
+#endif
 }
 
 
@@ -3375,7 +3377,9 @@ static void DebugPause(const FunctionCallbackInfo<Value>& args) {
 
 static void DebugEnd(const FunctionCallbackInfo<Value>& args) {
   if (debugger_running) {
+#if 0
     v8::Debug::DisableAgent();
+#endif
     debugger_running = false;
   }
 }
