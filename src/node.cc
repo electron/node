@@ -3451,7 +3451,12 @@ void Init(int* argc,
 
   // Fetch a reference to the main isolate, so we have a reference to it
   // even when we need it to access it from another (debugger) thread.
+  if (g_upstream_node_mode) {
+  node_isolate = Isolate::New();
+  node_isolate->Enter();
+  } else {
   node_isolate = Isolate::GetCurrent();
+  }
 
 #ifdef __POSIX__
   // Raise the open file descriptor limit.
@@ -3684,6 +3689,7 @@ int Start(int argc, char** argv) {
   }
 
   CHECK_NE(node_isolate, NULL);
+  node_isolate->Exit();
   node_isolate->Dispose();
   node_isolate = NULL;
   V8::Dispose();
