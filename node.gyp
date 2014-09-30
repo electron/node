@@ -211,22 +211,6 @@
             [ 'node_shared_openssl=="false"', {
               'dependencies': [
                 './deps/openssl/openssl.gyp:openssl',
-
-                # For tests
-                './deps/openssl/openssl.gyp:openssl-cli',
-              ],
-              # Do not let unused OpenSSL symbols to slip away
-              'xcode_settings': {
-                'OTHER_LDFLAGS': [
-                  '-Wl,-force_load,<(PRODUCT_DIR)/libopenssl.a',
-                ],
-              },
-              'conditions': [
-                ['OS in "linux freebsd"', {
-                  'ldflags': [
-                    '-Wl,--whole-archive <(PRODUCT_DIR)/libopenssl.a -Wl,--no-whole-archive',
-                  ],
-                }],
               ],
             }]]
         }, {
