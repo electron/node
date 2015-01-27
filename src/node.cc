@@ -3471,6 +3471,8 @@ void Init(int* argc,
   if (!use_debug_agent) {
     RegisterDebugSignalHandler();
   }
+
+  node_is_initialized = true;
 }
 
 
@@ -3679,7 +3681,6 @@ int Start(int argc, char** argv) {
 
   int code;
   V8::Initialize();
-  node_is_initialized = true;
 
   // Fetch a reference to the main isolate, so we have a reference to it
   // even when we need it to access it from another (debugger) thread.
