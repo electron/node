@@ -32,6 +32,8 @@
     startup.globalConsole();
     }  // not isRenderer
 
+    startup.initAsarSupport();
+
     startup.processAssert();
     startup.processConfig();
     startup.processNextTick();
