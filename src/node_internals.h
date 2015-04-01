@@ -152,20 +152,20 @@ inline MUST_USE_RESULT bool ParseArrayIndex(v8::Handle<v8::Value> arg,
   return true;
 }
 
-void ThrowError(v8::Isolate* isolate, const char* errmsg);
-void ThrowTypeError(v8::Isolate* isolate, const char* errmsg);
-void ThrowRangeError(v8::Isolate* isolate, const char* errmsg);
-void ThrowErrnoException(v8::Isolate* isolate,
-                         int errorno,
-                         const char* syscall = nullptr,
-                         const char* message = nullptr,
-                         const char* path = nullptr);
-void ThrowUVException(v8::Isolate* isolate,
-                      int errorno,
-                      const char* syscall = nullptr,
-                      const char* message = nullptr,
-                      const char* path = nullptr,
-                      const char* dest = nullptr);
+NODE_EXTERN void ThrowError(v8::Isolate* isolate, const char* errmsg);
+NODE_EXTERN void ThrowTypeError(v8::Isolate* isolate, const char* errmsg);
+NODE_EXTERN void ThrowRangeError(v8::Isolate* isolate, const char* errmsg);
+NODE_EXTERN void ThrowErrnoException(v8::Isolate* isolate,
+                                     int errorno,
+                                     const char* syscall = nullptr,
+                                     const char* message = nullptr,
+                                     const char* path = nullptr);
+NODE_EXTERN void ThrowUVException(v8::Isolate* isolate,
+                                  int errorno,
+                                  const char* syscall = nullptr,
+                                  const char* message = nullptr,
+                                  const char* path = nullptr,
+                                  const char* dest = nullptr);
 
 NODE_DEPRECATED("Use ThrowError(isolate)",
                 inline void ThrowError(const char* errmsg) {
