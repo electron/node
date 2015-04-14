@@ -119,8 +119,6 @@ static bool abort_on_uncaught_exception = false;
 static const char* eval_string = nullptr;
 static unsigned int preload_module_count = 0;
 static const char** preload_modules = nullptr;
-static bool use_debug_agent = false;
-static bool debug_wait_connect = false;
 static int debug_port = 5858;
 static bool v8_is_profiling = false;
 static bool node_is_initialized = false;
@@ -128,6 +126,10 @@ static node_module* modpending;
 static node_module* modlist_builtin;
 static node_module* modlist_linked;
 static node_module* modlist_addon;
+
+// Exposed for use from atom::NodeMain.
+bool use_debug_agent = false;
+bool debug_wait_connect = false;
 
 #if defined(NODE_HAVE_I18N_SUPPORT)
 // Path to ICU data (for i18n / Intl)
@@ -3200,8 +3202,8 @@ static void DispatchMessagesDebugAgentCallback(Environment* env) {
   uv_async_send(&dispatch_debug_messages_async);
 }
 
-
-static void StartDebug(Environment* env, bool wait) {
+// Called from atom::NodeMain.
+void StartDebug(Environment* env, bool wait) {
   CHECK(!debugger_running);
 
   env->debugger_agent()->set_dispatch_handler(

@@ -151,6 +151,8 @@ typedef intptr_t ssize_t;
 namespace node {
 
 NODE_EXTERN extern bool no_deprecation;
+NODE_EXTERN extern bool use_debug_agent;
+NODE_EXTERN extern bool debug_wait_connect;
 
 NODE_EXTERN int Start(int argc, char *argv[]);
 NODE_EXTERN void Init(int* argc,
@@ -183,6 +185,8 @@ NODE_EXTERN Environment* CreateEnvironment(v8::Isolate* isolate,
 NODE_EXTERN void EmitBeforeExit(Environment* env);
 NODE_EXTERN int EmitExit(Environment* env);
 NODE_EXTERN void RunAtExit(Environment* env);
+
+NODE_EXTERN void StartDebug(Environment* env, bool wait);
 
 /* Converts a unixtime to V8 Date */
 #define NODE_UNIXTIME_V8(t) v8::Date::New(v8::Isolate::GetCurrent(),          \
