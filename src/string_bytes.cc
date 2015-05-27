@@ -278,6 +278,7 @@ bool StringBytes::GetExternalParts(Local<Value> val,
     return true;
   }
 
+#if 0
   if (!val->IsString())
     return false;
 
@@ -297,6 +298,7 @@ bool StringBytes::GetExternalParts(Local<Value> val,
     *len = ext->length() * sizeof(*ext->data());
     return true;
   }
+#endif
 
   return false;
 }
