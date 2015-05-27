@@ -296,6 +296,7 @@ bool StringBytes::GetExternalParts(Isolate* isolate,
     return true;
   }
 
+#if 0
   if (!val->IsString())
     return false;
 
@@ -315,6 +316,7 @@ bool StringBytes::GetExternalParts(Isolate* isolate,
     *len = ext->length() * sizeof(*ext->data());
     return true;
   }
+#endif
 
   return false;
 }
