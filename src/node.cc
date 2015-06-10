@@ -101,7 +101,6 @@ using v8::ObjectTemplate;
 using v8::Promise;
 using v8::PromiseRejectMessage;
 using v8::PropertyCallbackInfo;
-using v8::SealHandleScope;
 using v8::StackFrame;
 using v8::StackTrace;
 using v8::String;
@@ -3931,7 +3930,7 @@ static void StartNodeInstance(void* arg) {
       EnableDebug(env);
 
     {
-      SealHandleScope seal(isolate);
+      HandleScope seal(isolate);
       bool more;
       do {
         v8::platform::PumpMessageLoop(default_platform, isolate);
