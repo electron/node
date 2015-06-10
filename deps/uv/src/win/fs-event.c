@@ -20,6 +20,7 @@
  */
 
 #include <assert.h>
+#include <malloc.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>

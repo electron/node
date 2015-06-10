@@ -20,6 +20,7 @@
  */
 
 #include <assert.h>
+#include <malloc.h>
 
 #include "uv.h"
 #include "internal.h"
