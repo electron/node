@@ -3983,11 +3983,15 @@ static void StartNodeInstance(void* arg) {
       HandleScope seal(isolate);
       bool more;
       do {
+#if 0
         v8::platform::PumpMessageLoop(default_platform, isolate);
+#endif
         more = uv_run(env->event_loop(), UV_RUN_ONCE);
 
         if (more == false) {
+#if 0
           v8::platform::PumpMessageLoop(default_platform, isolate);
+#endif
           EmitBeforeExit(env);
 
           // Emit `beforeExit` if the loop became alive either after emitting
@@ -4038,8 +4042,10 @@ int Start(int argc, char** argv) {
 #endif
 
   const int thread_pool_size = 4;
+#if 0
   default_platform = v8::platform::CreateDefaultPlatform(thread_pool_size);
   V8::InitializePlatform(default_platform);
+#endif
   V8::Initialize();
 
   int exit_code = 1;
@@ -4056,8 +4062,10 @@ int Start(int argc, char** argv) {
   }
   V8::Dispose();
 
+#if 0
   delete default_platform;
   default_platform = nullptr;
+#endif
 
   delete[] exec_argv;
   exec_argv = nullptr;
