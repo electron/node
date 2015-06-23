@@ -5,9 +5,13 @@ var path = require('path');
 var fs = require('fs');
 var exec = require('child_process').exec;
 var completed = 0;
-var expected_tests = 2;
+var expected_async = 4;
+var linkTime;
+var fileTime;
 
 var is_windows = process.platform === 'win32';
+
+common.refreshTmpDir();
 
 var runtest = function(skip_symlinks) {
   if (!skip_symlinks) {
@@ -15,15 +19,22 @@ var runtest = function(skip_symlinks) {
     var linkData = path.join(common.fixturesDir, '/cycles/root.js');
     var linkPath = path.join(common.tmpDir, 'symlink1.js');
 
-    // Delete previously created link
-    try {
-      fs.unlinkSync(linkPath);
-    } catch (e) {}
-
     fs.symlink(linkData, linkPath, function(err) {
       if (err) throw err;
       console.log('symlink done');
-      // todo: fs.lstat?
+
+      fs.lstat(linkPath, function(err, stats) {
+        if (err) throw err;
+        linkTime = stats.mtime.getTime();
+        completed++;
+      });
+
+      fs.stat(linkPath, function(err, stats) {
+        if (err) throw err;
+        fileTime = stats.mtime.getTime();
+        completed++;
+      });
+
       fs.readlink(linkPath, function(err, destination) {
         if (err) throw err;
         assert.equal(destination, linkData);
@@ -35,11 +46,6 @@ var runtest = function(skip_symlinks) {
   // test creating and reading hard link
   var srcPath = path.join(common.fixturesDir, 'cycles', 'root.js');
   var dstPath = path.join(common.tmpDir, 'link1.js');
-
-  // Delete previously created link
-  try {
-    fs.unlinkSync(dstPath);
-  } catch (e) {}
 
   fs.link(srcPath, dstPath, function(err) {
     if (err) throw err;
@@ -56,7 +62,7 @@ if (is_windows) {
   // We'll only try to run symlink test if we have enough privileges.
   exec('whoami /priv', function(err, o) {
     if (err || o.indexOf('SeCreateSymbolicLinkPrivilege') == -1) {
-      expected_tests = 1;
+      expected_async = 1;
       runtest(true);
     } else {
       runtest(false);
@@ -67,6 +73,7 @@ if (is_windows) {
 }
 
 process.on('exit', function() {
-  assert.equal(completed, expected_tests);
+  assert.equal(completed, expected_async);
+  assert(linkTime !== fileTime);
 });
 
