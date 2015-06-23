@@ -523,8 +523,12 @@
       var hasBeenNotified = hasBeenNotifiedProperty.get(promise);
       if (hasBeenNotified !== undefined) {
         hasBeenNotifiedProperty.delete(promise);
-        if (hasBeenNotified === true)
-          process.emit('rejectionHandled', promise);
+        if (hasBeenNotified === true) {
+          process.nextTick(function() {
+            process.emit('rejectionHandled', promise);
+          });
+        }
+
       }
     }
 
@@ -532,9 +536,7 @@
       if (event === promiseRejectEvent.unhandled)
         unhandledRejection(promise, reason);
       else if (event === promiseRejectEvent.handled)
-        process.nextTick(function() {
-          rejectionHandled(promise);
-        });
+        rejectionHandled(promise);
       else
         NativeModule.require('assert').fail('unexpected PromiseRejectEvent');
     });

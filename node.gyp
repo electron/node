@@ -75,6 +75,7 @@
       'lib/internal/smalloc.js',
       'lib/internal/socket_list.js',
       'lib/internal/repl.js',
+      'lib/internal/util.js',
     ],
   },
 
@@ -601,7 +602,7 @@
     {
       'target_name': 'cctest',
       'type': 'executable',
-      'dependencies': [ 
+      'dependencies': [
         'deps/gtest/gtest.gyp:gtest',
         # 'deps/v8/tools/gyp/v8.gyp:v8',
         # 'deps/v8/tools/gyp/v8.gyp:v8_libplatform'
