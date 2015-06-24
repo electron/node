@@ -75,6 +75,7 @@
       'lib/internal/smalloc.js',
       'lib/internal/socket_list.js',
       'lib/internal/repl.js',
+      'lib/internal/util.js',
     ],
   },
 
@@ -233,13 +234,13 @@
                 [ 'node_target_type!="static_library"', {
                   'xcode_settings': {
                     'OTHER_LDFLAGS': [
-                      '-Wl,-force_load,<(PRODUCT_DIR)/libopenssl.a',
+                      '-Wl,-force_load,<(PRODUCT_DIR)/<(OPENSSL_PRODUCT)',
                     ],
                   },
                   'conditions': [
                     ['OS in "linux freebsd"', {
                       'ldflags': [
-                        '-Wl,--whole-archive <(PRODUCT_DIR)/libopenssl.a',
+                        '-Wl,--whole-archive <(PRODUCT_DIR)/<(OPENSSL_PRODUCT)',
                         '-Wl,--no-whole-archive',
                       ],
                     }],
@@ -630,7 +631,7 @@
     {
       'target_name': 'cctest',
       'type': 'executable',
-      'dependencies': [ 
+      'dependencies': [
         'deps/gtest/gtest.gyp:gtest',
         'deps/v8/tools/gyp/v8.gyp:v8',
         'deps/v8/tools/gyp/v8.gyp:v8_libplatform'

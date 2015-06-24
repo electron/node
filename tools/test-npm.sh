@@ -13,10 +13,9 @@ if [ -z $NODE_EXE ]; then
 fi
 
 rm -rf test-npm
-mkdir test-npm
 
 # make a copy of deps/npm to run the tests on
-cp -r deps/npm/ test-npm/
+cp -r deps/npm test-npm
 
 cd test-npm
 
@@ -31,7 +30,8 @@ export npm_config_tmp="npm-tmp"
 
 # install npm devDependencies and run npm's tests
 ../$NODE_EXE cli.js install --ignore-scripts
-../$NODE_EXE cli.js run-script test-all
+../$NODE_EXE cli.js run-script test-legacy
+../$NODE_EXE cli.js run-script test
 
 # clean up everything one single shot
 cd .. && rm -rf test-npm

@@ -8,6 +8,8 @@ var async_completed = 0, async_expected = 0, unlink = [];
 var isWindows = process.platform === 'win32';
 var skipSymlinks = false;
 
+common.refreshTmpDir();
+
 var root = '/';
 if (isWindows) {
   // something like "C:\\"
@@ -38,6 +40,7 @@ function tmp(p) {
 
 var fixturesAbsDir = common.fixturesDir;
 var tmpAbsDir = common.tmpDir;
+assert(fixturesAbsDir !== tmpAbsDir);
 
 console.error('absolutes\n%s\n%s', fixturesAbsDir, tmpAbsDir);
 
@@ -296,8 +299,6 @@ function test_deep_symlink_mix(callback) {
     return runNextTest();
   }
 
-  // todo: check to see that common.fixturesDir is not rooted in the
-  //       same directory as our test symlink.
   /*
   /tmp/node-test-realpath-f1 -> ../tmp/node-test-realpath-d1/foo
   /tmp/node-test-realpath-d1 -> ../node-test-realpath-d2
@@ -575,9 +576,6 @@ function runTest() {
   var tmpDirs = ['cycles', 'cycles/folder'];
   tmpDirs.forEach(function(t) {
     t = tmp(t);
-    var s;
-    try { s = fs.statSync(t); } catch (ex) {}
-    if (s) return;
     fs.mkdirSync(t, 0o700);
   });
   fs.writeFileSync(tmp('cycles/root.js'), "console.error('roooot!');");
