@@ -56,7 +56,7 @@
           }],
         ],
       }],
-      ['openssl_fips != ""', {
+      ['"" != ""', {
         'OPENSSL_PRODUCT': 'libcrypto.a',
       }, {
         'OPENSSL_PRODUCT': 'libopenssl.a',
