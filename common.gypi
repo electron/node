@@ -82,7 +82,7 @@
           }],
         ],
       }],
-      ['openssl_fips != ""', {
+      ['"" != ""', {
         'openssl_product': '<(STATIC_LIB_PREFIX)crypto<(STATIC_LIB_SUFFIX)',
       }, {
         'openssl_product': '<(STATIC_LIB_PREFIX)openssl<(STATIC_LIB_SUFFIX)',
