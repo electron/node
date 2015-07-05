@@ -22,6 +22,9 @@ Example:
     // returns
     '/foo/bar/baz/asdf'
 
+*Note:* If the path is a zero-length string then the current working directory
+        will be returned.
+
 ## path.join([path1][, path2][, ...])
 
 Join all arguments together and normalize the resulting path.
@@ -38,6 +41,9 @@ Example:
     path.join('foo', {}, 'bar')
     // throws exception
     TypeError: Arguments to path.join must be strings
+
+*Note:* If the joined path is a zero-length string then the current working
+        directory will be returned.
 
 ## path.resolve([from ...], to)
 
@@ -78,6 +84,9 @@ Examples:
     // if currently in /home/myself/iojs, it returns
     '/home/myself/iojs/wwwroot/static_files/gif/image.gif'
 
+*Note:* If the path is a zero-length string then the current working directory
+        will be used.
+
 ## path.isAbsolute(path)
 
 Determines whether `path` is an absolute path. An absolute path will always
@@ -94,8 +103,10 @@ Windows examples:
 
     path.isAbsolute('//server')  // true
     path.isAbsolute('C:/foo/..') // true
-    path.isAbsolute('bar\\baz')   // false
+    path.isAbsolute('bar\\baz')  // false
     path.isAbsolute('.')         // false
+
+*Note:* If the path is a zero-length string then `false` will be returned.
 
 ## path.relative(from, to)
 
@@ -116,6 +127,10 @@ Examples:
     path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb')
     // returns
     '../../impl/bbb'
+
+*Note:* If any of the paths passed are zero-length strings then the current
+        working directory will be used instead. If both the paths are the same
+        then a zero-length string will be returned.
 
 ## path.dirname(p)
 
