@@ -65,6 +65,38 @@ using v8::Uint8Array;
 using v8::Value;
 using v8::WeakCallbackInfo;
 
+namespace {
+
+v8::Local<v8::ArrayBuffer> DefaultArrayBufferNew(
+    v8::Isolate* isolate, size_t size) {
+  return v8::ArrayBuffer::New(isolate, size);
+}
+
+v8::Local<v8::ArrayBuffer> DefaultArrayBufferNewWith(
+    v8::Isolate* isolate, void* data, size_t size) {
+  return v8::ArrayBuffer::New(isolate, data, size);
+}
+
+v8::Local<v8::Uint8Array> DefaultUint8ArrayNew(
+    v8::Local<v8::ArrayBuffer> ab, size_t offset, size_t size) {
+  return v8::Uint8Array::New(ab, offset, size);
+}
+
+ArrayBufferNew g_array_buffer_new = &DefaultArrayBufferNew;
+ArrayBufferNewWith g_array_buffer_new_with = &DefaultArrayBufferNewWith;
+Uint8ArrayNew g_uint8_array_new = &DefaultUint8ArrayNew;
+
+}  // namespace
+
+void SetArrayBufferCreator(
+    ArrayBufferNew array_buffer_new,
+    ArrayBufferNewWith array_buffer_new_with,
+    Uint8ArrayNew uint8_array_new) {
+  g_array_buffer_new = array_buffer_new;
+  g_array_buffer_new_with = array_buffer_new_with;
+  g_uint8_array_new = uint8_array_new;
+}
+
 class CallbackInfo {
  public:
   static inline void Free(char* data, void* hint);
@@ -114,9 +146,11 @@ CallbackInfo::CallbackInfo(Isolate* isolate,
       data_(data),
       hint_(hint) {
   ArrayBuffer::Contents obj_c = object->GetContents();
+#if 0
   CHECK_EQ(data_, static_cast<char*>(obj_c.Data()));
   if (object->ByteLength() != 0)
     CHECK_NE(data_, nullptr);
+#endif
 
   persistent_.SetWeak(this, WeakCallback, v8::WeakCallbackType::kParameter);
   persistent_.SetWrapperClassId(BUFFER_ID);
@@ -265,6 +299,7 @@ MaybeLocal<Object> New(Environment* env, size_t length) {
     return Local<Object>();
   }
 
+  if (g_standalone_mode) {
   void* data;
   if (length > 0) {
     data = BufferMalloc(length);
@@ -288,6 +323,16 @@ MaybeLocal<Object> New(Environment* env, size_t length) {
   // Object failed to be created. Clean up resources.
   free(data);
   return Local<Object>();
+  } else {  // g_standalone_mode
+  Local<ArrayBuffer> ab = g_array_buffer_new(env->isolate(), length);
+  Local<Uint8Array> ui = g_uint8_array_new(ab, 0, length);
+  Maybe<bool> mb =
+      ui->SetPrototype(env->context(), env->buffer_prototype_object());
+  if (mb.FromMaybe(false))
+    return scope.Escape(ui);
+
+  return Local<Object>();
+  }  // else
 }
 
 
@@ -309,6 +354,7 @@ MaybeLocal<Object> Copy(Environment* env, const char* data, size_t length) {
     return Local<Object>();
   }
 
+  if (g_standalone_mode) {
   void* new_data;
   if (length > 0) {
     CHECK_NE(data, nullptr);
@@ -334,6 +380,17 @@ MaybeLocal<Object> Copy(Environment* env, const char* data, size_t length) {
   // Object failed to be created. Clean up resources.
   free(new_data);
   return Local<Object>();
+  } else {  // g_standalone_mode
+  Local<ArrayBuffer> ab = g_array_buffer_new(env->isolate(), length);
+  memcpy(ab->GetContents().Data(), data, length);
+  Local<Uint8Array> ui = g_uint8_array_new(ab, 0, length);
+  Maybe<bool> mb =
+      ui->SetPrototype(env->context(), env->buffer_prototype_object());
+  if (mb.FromMaybe(false))
+    return scope.Escape(ui);
+
+  return Local<Object>();
+  }  // else
 }
 
 
@@ -362,13 +419,14 @@ MaybeLocal<Object> New(Environment* env,
     return Local<Object>();
   }
 
-  Local<ArrayBuffer> ab = ArrayBuffer::New(env->isolate(), data, length);
+  Local<ArrayBuffer> ab =
+      g_array_buffer_new_with(env->isolate(), data, length);
   // `Neuter()`ing is required here to prevent materialization of the backing
   // store in v8. `nullptr` buffers are not writable, so this is semantically
   // correct.
   if (data == nullptr)
     ab->Neuter();
-  Local<Uint8Array> ui = Uint8Array::New(ab, 0, length);
+  Local<Uint8Array> ui = g_uint8_array_new(ab, 0, length);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
 
@@ -383,10 +441,25 @@ MaybeLocal<Object> New(Environment* env,
 MaybeLocal<Object> New(Isolate* isolate, char* data, size_t length) {
   EscapableHandleScope handle_scope(isolate);
   Environment* env = Environment::GetCurrent(isolate);
+  if (g_standalone_mode) {
   Local<Object> obj;
   if (Buffer::New(env, data, length).ToLocal(&obj))
     return handle_scope.Escape(obj);
   return Local<Object>();
+  } else {  // g_standalone_mode
+  // For public API, we need to ensure the pointer itself is not changed.
+  Local<ArrayBuffer> ab = g_array_buffer_new_with(
+      env->isolate(), data, length);
+  if (data == nullptr)
+    ab->Neuter();
+  Local<Uint8Array> ui = g_uint8_array_new(ab, 0, length);
+  Maybe<bool> mb =
+      ui->SetPrototype(env->context(), env->buffer_prototype_object());
+  CallbackInfo::New(env->isolate(), ab, CallbackInfo::Free, nullptr);
+  if (mb.FromMaybe(false))
+    return handle_scope.Escape(ui);
+  return Local<Object>();
+  }  // else
 }
 
 
@@ -398,6 +471,7 @@ MaybeLocal<Object> New(Environment* env, char* data, size_t length) {
     CHECK(length <= kMaxLength);
   }
 
+  if (g_standalone_mode) {
   Local<ArrayBuffer> ab =
       ArrayBuffer::New(env->isolate(),
                        data,
@@ -409,6 +483,17 @@ MaybeLocal<Object> New(Environment* env, char* data, size_t length) {
   if (mb.FromMaybe(false))
     return scope.Escape(ui);
   return Local<Object>();
+  } else {  // g_standalone_mode
+  Local<ArrayBuffer> ab = g_array_buffer_new(env->isolate(), length);
+  memcpy(ab->GetContents().Data(), data, length);
+  free(data);
+  Local<Uint8Array> ui = g_uint8_array_new(ab, 0, length);
+  Maybe<bool> mb =
+      ui->SetPrototype(env->context(), env->buffer_prototype_object());
+  if (mb.FromMaybe(false))
+    return scope.Escape(ui);
+  return Local<Object>();
+  }  // else
 }
 
 
