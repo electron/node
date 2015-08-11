@@ -73,6 +73,28 @@ using v8::Uint8Array;
 using v8::Value;
 using v8::WeakCallbackData;
 
+namespace {
+
+v8::Local<v8::ArrayBuffer> DefaultArrayBufferCreate(
+    v8::Isolate* isolate, size_t size) {
+  return v8::ArrayBuffer::New(isolate, size);
+}
+
+v8::Local<v8::Uint8Array> DefaultUint8ArrayCreate(
+    v8::Local<v8::ArrayBuffer> ab, size_t offset, size_t size) {
+  return v8::Uint8Array::New(ab, offset, size);
+}
+
+ArrayBufferCreator g_array_buffer_create = &DefaultArrayBufferCreate;
+Uint8ArrayCreator g_uint8_array_create = &DefaultUint8ArrayCreate;
+
+}  // namespace
+
+void SetArrayBufferCreator(ArrayBufferCreator array_buffer_create,
+                           Uint8ArrayCreator uint8_array_create) {
+  g_array_buffer_create = array_buffer_create;
+  g_uint8_array_create = uint8_array_create;
+}
 
 class CallbackInfo {
  public:
@@ -251,28 +273,13 @@ MaybeLocal<Object> New(Environment* env, size_t length) {
     return Local<Object>();
   }
 
-  void* data;
-  if (length > 0) {
-    data = malloc(length);
-    if (data == nullptr)
-      return Local<Object>();
-  } else {
-    data = nullptr;
-  }
-
-  Local<ArrayBuffer> ab =
-    ArrayBuffer::New(env->isolate(),
-        data,
-        length,
-        ArrayBufferCreationMode::kInternalized);
-  Local<Uint8Array> ui = Uint8Array::New(ab, 0, length);
+  Local<ArrayBuffer> ab = g_array_buffer_create(env->isolate(), length);
+  Local<Uint8Array> ui = g_uint8_array_create(ab, 0, length);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
   if (mb.FromMaybe(false))
     return scope.Escape(ui);
 
-  // Object failed to be created. Clean up resources.
-  free(data);
   return Local<Object>();
 }
 
@@ -295,30 +302,14 @@ MaybeLocal<Object> Copy(Environment* env, const char* data, size_t length) {
     return Local<Object>();
   }
 
-  void* new_data;
-  if (length > 0) {
-    CHECK_NE(data, nullptr);
-    new_data = malloc(length);
-    if (new_data == nullptr)
-      return Local<Object>();
-    memcpy(new_data, data, length);
-  } else {
-    new_data = nullptr;
-  }
-
-  Local<ArrayBuffer> ab =
-    ArrayBuffer::New(env->isolate(),
-        new_data,
-        length,
-        ArrayBufferCreationMode::kInternalized);
-  Local<Uint8Array> ui = Uint8Array::New(ab, 0, length);
+  Local<ArrayBuffer> ab = g_array_buffer_create(env->isolate(), length);
+  memcpy(ab->GetContents().Data(), data, length);
+  Local<Uint8Array> ui = g_uint8_array_create(ab, 0, length);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
   if (mb.FromMaybe(false))
     return scope.Escape(ui);
 
-  // Object failed to be created. Clean up resources.
-  free(new_data);
   return Local<Object>();
 }
 
@@ -348,15 +339,16 @@ MaybeLocal<Object> New(Environment* env,
     return Local<Object>();
   }
 
-  Local<ArrayBuffer> ab = ArrayBuffer::New(env->isolate(), data, length);
-  Local<Uint8Array> ui = Uint8Array::New(ab, 0, length);
+  Local<ArrayBuffer> ab = g_array_buffer_create(env->isolate(), length);
+  memcpy(ab->GetContents().Data(), data, length);
+  callback(data, hint);
+  Local<Uint8Array> ui = g_uint8_array_create(ab, 0, length);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
 
   if (!mb.FromMaybe(false))
     return Local<Object>();
 
-  CallbackInfo::New(env->isolate(), ui, callback, hint);
   return scope.Escape(ui);
 }
 
@@ -379,12 +371,9 @@ MaybeLocal<Object> New(Environment* env, char* data, size_t length) {
     CHECK(length <= kMaxLength);
   }
 
-  Local<ArrayBuffer> ab =
-      ArrayBuffer::New(env->isolate(),
-                       data,
-                       length,
-                       ArrayBufferCreationMode::kInternalized);
-  Local<Uint8Array> ui = Uint8Array::New(ab, 0, length);
+  Local<ArrayBuffer> ab = g_array_buffer_create(env->isolate(), length);
+  memcpy(ab->GetContents().Data(), data, length);
+  Local<Uint8Array> ui = g_uint8_array_create(ab, 0, length);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
   if (mb.FromMaybe(false))
@@ -405,23 +394,8 @@ void Create(const FunctionCallbackInfo<Value>& args) {
     return env->ThrowRangeError("invalid Buffer length");
   }
 
-  void* data;
-  if (length > 0) {
-    data = malloc(length);
-    if (data == nullptr) {
-      return env->ThrowRangeError(
-          "Buffer allocation failed - process out of memory");
-    }
-  } else {
-    data = nullptr;
-  }
-
-  Local<ArrayBuffer> ab =
-      ArrayBuffer::New(isolate,
-                       data,
-                       length,
-                       ArrayBufferCreationMode::kInternalized);
-  Local<Uint8Array> ui = Uint8Array::New(ab, 0, length);
+  Local<ArrayBuffer> ab = g_array_buffer_create(env->isolate(), length);
+  Local<Uint8Array> ui = g_uint8_array_create(ab, 0, length);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
   if (!mb.FromMaybe(false))
@@ -448,7 +422,7 @@ void CreateFromArrayBuffer(const FunctionCallbackInfo<Value>& args) {
   if (!args[0]->IsArrayBuffer())
     return env->ThrowTypeError("argument is not an ArrayBuffer");
   Local<ArrayBuffer> ab = args[0].As<ArrayBuffer>();
-  Local<Uint8Array> ui = Uint8Array::New(ab, 0, ab->ByteLength());
+  Local<Uint8Array> ui = g_uint8_array_create(ab, 0, ab->ByteLength());
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
   if (!mb.FromMaybe(false))
@@ -471,7 +445,7 @@ void Slice(const FunctionCallbackInfo<Value>& args) {
   CHECK_GE(end, start);
   size_t size = end - start;
   CHECK_GE(ab_c.ByteLength(), start + size);
-  Local<Uint8Array> ui = Uint8Array::New(ab, start, size);
+  Local<Uint8Array> ui = g_uint8_array_create(ab, start, size);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
   if (!mb.FromMaybe(false))
