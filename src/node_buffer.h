@@ -10,6 +10,13 @@ namespace Buffer {
 static const unsigned int kMaxLength =
     sizeof(int32_t) == sizeof(intptr_t) ? 0x3fffffff : 0x7fffffff;
 
+// Allow creating custom ArrayBuffer objets.
+typedef v8::Local<v8::ArrayBuffer> (*ArrayBufferCreator)(
+    v8::Isolate* isolate, size_t size);
+typedef v8::Local<v8::Uint8Array> (*Uint8ArrayCreator)(
+    v8::Local<v8::ArrayBuffer> ab, size_t offset, size_t size);
+NODE_EXTERN void SetArrayBufferCreator(ArrayBufferCreator, Uint8ArrayCreator);
+
 NODE_EXTERN typedef void (*FreeCallback)(char* data, void* hint);
 
 NODE_EXTERN bool HasInstance(v8::Handle<v8::Value> val);
