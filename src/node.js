@@ -576,12 +576,23 @@
     });
   }
 
+  function createDevNull() {
+    var Writable = NativeModule.require('stream').Writable;
+    var stream = new Writable;
+    stream.isTTY = false;
+    stream._write = function(chunk, encoding, callback) {
+      setImmediate(callback);
+    }
+    return stream;
+  }
+
   function createWritableStdioStream(fd) {
     var stream;
     var tty_wrap = process.binding('tty_wrap');
 
     // Note stream._type is used for test-module-load-list.js
 
+    try {
     switch (tty_wrap.guessHandleType(fd)) {
       case 'TTY':
         var tty = NativeModule.require('tty');
@@ -609,6 +620,9 @@
       default:
         // Probably an error on in uv_guess_handle()
         throw new Error('Implement me. Unknown stream file type!');
+    }
+    } catch (error) {
+      stream = createDevNull();
     }
 
     // For supporting legacy API we put the FD here.
