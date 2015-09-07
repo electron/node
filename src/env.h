@@ -507,7 +507,10 @@ class Environment {
 #undef V
 
   inline debugger::Agent* debugger_agent() {
+    return nullptr;
+#if 0
     return &debugger_agent_;
+#endif
   }
 
   typedef ListHead<HandleWrap, &HandleWrap::handle_wrap_queue_> HandleWrapQueue;
@@ -545,7 +548,9 @@ class Environment {
   bool printed_error_;
   bool trace_sync_io_;
   int64_t async_wrap_uid_;
+#if 0
   debugger::Agent debugger_agent_;
+#endif
 
   HandleWrapQueue handle_wrap_queue_;
   ReqWrapQueue req_wrap_queue_;
