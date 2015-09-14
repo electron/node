@@ -9,6 +9,20 @@
 (function(process) {
   this.global = this;
 
+  // Turn global variables into local variables so we can refrence them in this
+  // scope even after we deleted them from global context.
+  var global = this;
+  var setImmediate = function() {
+    const timers = NativeModule.require('timers');
+    timers.setImmediate.apply(timers, arguments);
+    process.activateUvLoop();
+  }
+  var clearImmediate = function() {
+    const timers = NativeModule.require('timers');
+    timers.clearImmediate.apply(timers, arguments);
+    process.activateUvLoop();
+  }
+
   function startup() {
     var EventEmitter = NativeModule.require('events').EventEmitter;
 
@@ -952,7 +966,7 @@
   };
 
   NativeModule.wrapper = [
-    '(function (exports, require, module, __filename, __dirname) { ',
+    '(function (exports, require, module, __filename, __dirname, process, global, setImmediate, clearImmediate) { ',
     '\n});'
   ];
 
@@ -960,8 +974,19 @@
     var source = NativeModule.getSource(this.id);
     source = NativeModule.wrap(source);
 
+    // Use local versions of globals in Electron mode, and the global versions
+    // in upstream Node mode.
+    var s, c;
+    if (process.versions.electron) {
+      s = setImmediate;
+      c = clearImmediate;
+    } else {
+      s = global.setImmediate;
+      c = global.clearImmediate;
+    }
+
     var fn = runInThisContext(source, { filename: this.filename });
-    fn(this.exports, NativeModule.require, this, this.filename);
+    fn(this.exports, NativeModule.require, this, this.filename, undefined, process, global, s, c);
 
     this.loaded = true;
   };
