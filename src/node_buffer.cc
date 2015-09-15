@@ -385,10 +385,10 @@ MaybeLocal<Object> New(Environment* env, char* data, size_t length) {
   Local<Uint8Array> ui = g_uint8_array_new(ab, 0, length);
   Maybe<bool> mb =
       ui->SetPrototype(env->context(), env->buffer_prototype_object());
-  if (mb.FromMaybe(false))
-    return scope.Escape(ui);
 
   CallbackInfo::New(env->isolate(), ui, CallbackInfo::Free, nullptr);
+  if (mb.FromMaybe(false))
+    return scope.Escape(ui);
   return Local<Object>();
 }
 
