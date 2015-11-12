@@ -23,6 +23,7 @@
     });
     EventEmitter.call(process);
 
+    process.NativeModule = NativeModule;
     process.EventEmitter = EventEmitter; // process.EventEmitter is deprecated
 
     var isRenderer = process.argv[2] == '--type=renderer';
