@@ -4064,8 +4064,10 @@ static void StartNodeInstance(void* arg) {
     array_buffer_allocator->set_env(env);
     Context::Scope context_scope(context);
 
+#if 0
     isolate->SetAbortOnUncaughtExceptionCallback(
         ShouldAbortOnUncaughtException);
+#endif
 
     // Start debug agent when argv has --debug
     if (instance_data->use_debug_agent())
