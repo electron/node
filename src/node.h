@@ -1,15 +1,7 @@
 #ifndef SRC_NODE_H_
 #define SRC_NODE_H_
 
-#ifdef _WIN32
-# ifndef BUILDING_NODE_EXTENSION
-#   define NODE_EXTERN __declspec(dllexport)
-# else
-#   define NODE_EXTERN __declspec(dllimport)
-# endif
-#else
-# define NODE_EXTERN /* nothing */
-#endif
+#include "node_extern.h"
 
 #ifdef BUILDING_NODE_EXTENSION
 # undef BUILDING_V8_SHARED
