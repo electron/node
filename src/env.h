@@ -3,6 +3,7 @@
 
 #include "ares.h"
 #include "debug-agent.h"
+#include "node_extern.h"
 #include "handle_wrap.h"
 #include "req-wrap.h"
 #include "tree.h"
@@ -284,7 +285,7 @@ struct ares_task_t {
 
 RB_HEAD(ares_task_list, ares_task_t);
 
-class Environment {
+class NODE_EXTERN Environment {
  public:
   class AsyncHooks {
    public:

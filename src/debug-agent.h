@@ -22,6 +22,7 @@
 #ifndef SRC_DEBUG_AGENT_H_
 #define SRC_DEBUG_AGENT_H_
 
+#include "node_extern.h"
 #include "util.h"
 #include "util-inl.h"
 #include "uv.h"
@@ -38,7 +39,7 @@ class Environment;
 namespace node {
 namespace debugger {
 
-class AgentMessage {
+NODE_EXTERN class AgentMessage {
  public:
   AgentMessage(uint16_t* val, int length) : length_(length) {
     if (val == nullptr) {
@@ -64,7 +65,7 @@ class AgentMessage {
   int length_;
 };
 
-class Agent {
+class NODE_EXTERN Agent {
  public:
   explicit Agent(node::Environment* env);
   ~Agent();
