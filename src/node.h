@@ -471,6 +471,7 @@ struct node_module {
   struct node_module* nm_link;
 };
 
+NODE_EXTERN node_module* get_builtin_module(const char *name);
 extern "C" NODE_EXTERN void node_module_register(void* mod);
 
 #ifdef _WIN32
