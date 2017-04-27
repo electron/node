@@ -8,7 +8,6 @@
 #include "util-inl.h"
 #include "uv.h"
 #include "v8.h"
-#include "tracing/trace_event.h"
 
 #include <stdint.h>
 #include <stdlib.h>
