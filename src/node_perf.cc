@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "tracing/trace_event.h"
+
 #ifdef __POSIX__
 #include <sys/time.h>  // gettimeofday
 #endif

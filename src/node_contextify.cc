@@ -24,6 +24,7 @@
 #include "base_object-inl.h"
 #include "node_contextify.h"
 #include "node_context_data.h"
+#include "tracing/trace_event.h"
 
 namespace node {
 namespace contextify {
