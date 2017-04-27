@@ -305,6 +305,7 @@
         'src/node_file.cc',
         'src/node_http2.cc',
         'src/node_http_parser.cc',
+        'src/node_javascript.cc',
         'src/node_os.cc',
         'src/node_platform.cc',
         'src/node_perf.cc',
@@ -386,11 +387,11 @@
         'src/util-inl.h',
         'deps/http_parser/http_parser.h',
         'deps/v8/include/v8.h',
+        '<(SHARED_INTERMEDIATE_DIR)/node_natives.h',
         # javascript files to make for an even more pleasant IDE experience
         '<@(library_files)',
         # node.gyp is added to the project by default.
         'common.gypi',
-        '<(SHARED_INTERMEDIATE_DIR)/node_javascript.cc',
       ],
 
       'variables': {
@@ -709,13 +710,12 @@
       'actions': [
         {
           'action_name': 'node_js2c',
-          'process_outputs_as_sources': 1,
           'inputs': [
             '<@(library_files)',
             './config.gypi',
           ],
           'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/node_javascript.cc',
+            '<(SHARED_INTERMEDIATE_DIR)/node_natives.h',
           ],
           'conditions': [
             [ 'node_use_dtrace=="false" and node_use_etw=="false"', {
