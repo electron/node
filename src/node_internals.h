@@ -29,7 +29,6 @@
 #include "util-inl.h"
 #include "uv.h"
 #include "v8.h"
-#include "tracing/trace_event.h"
 #include "node_debug_options.h"
 
 #include <stdint.h>
