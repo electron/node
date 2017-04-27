@@ -4551,7 +4551,9 @@ int Start(int argc, char** argv) {
     fprintf(stderr, "Warning: Trace event is an experimental feature "
             "and could change at any time.\n");
     tracing_agent = new tracing::Agent();
+#if NODE_USE_V8_PLATFORM
     tracing_agent->Start(v8_platform.platform_, trace_enabled_categories);
+#endif
   }
   V8::Initialize();
   v8_initialized = true;
