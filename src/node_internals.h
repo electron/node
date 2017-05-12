@@ -96,10 +96,12 @@ extern bool config_pending_deprecation;
 // Tells whether it is safe to call v8::Isolate::GetCurrent().
 extern bool v8_initialized;
 
+class DebugOptions;
+
 // Contains initial debug options.
 // Set in node.cc.
 // Used in node_config.cc.
-extern node::DebugOptions debug_options;
+extern DebugOptions debug_options;
 
 // Forward declaration
 class Environment;
