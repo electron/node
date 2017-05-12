@@ -10,6 +10,8 @@
 #include "util.h"
 #include "zlib.h"
 
+#include "libplatform/libplatform.h"
+
 #include <sstream>
 #include <unicode/unistr.h>
 

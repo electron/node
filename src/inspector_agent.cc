@@ -332,7 +332,7 @@ class NodeInspectorClient : public V8InspectorClient {
       : env_(env), platform_(platform) {
     client_ = V8Inspector::create(env->isolate(), this);
     // TODO(bnoordhuis) Make name configurable from src/node.cc.
-    ContextInfo info(GetHumanReadableProcessName());
+    ContextInfo info("Electron Main Context");
     info.is_default = true;
     contextCreated(env->context(), info);
   }
