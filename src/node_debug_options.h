@@ -1,12 +1,14 @@
 #ifndef SRC_NODE_DEBUG_OPTIONS_H_
 #define SRC_NODE_DEBUG_OPTIONS_H_
 
+#include "node.h"
+
 #include <string>
 
 // Forward declaration to break recursive dependency chain with src/env.h.
 namespace node {
 
-class DebugOptions {
+class NODE_EXTERN DebugOptions {
  public:
   DebugOptions();
   bool ParseOption(const char* argv0, const std::string& option);
