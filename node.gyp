@@ -347,13 +347,13 @@
             'src/inspector_socket_server.h',
           ],
           'dependencies': [
-            'deps/v8_inspector/src/inspector/inspector.gyp:standalone_inspector',
+            # 'deps/v8_inspector/src/inspector/inspector.gyp:standalone_inspector',
             'v8_inspector_compress_protocol_json#host',
           ],
           'include_dirs': [
-            'deps/v8_inspector/include',
-            '<(SHARED_INTERMEDIATE_DIR)/include', # for inspector
-            '<(SHARED_INTERMEDIATE_DIR)',
+            # 'deps/v8_inspector/include',
+            # '<(SHARED_INTERMEDIATE_DIR)/include', # for inspector
+            # '<(SHARED_INTERMEDIATE_DIR)',
           ],
         }, {
           'defines': [ 'HAVE_INSPECTOR=0' ]

@@ -234,12 +234,15 @@ class ChannelImpl final : public v8_inspector::V8Inspector::Channel {
   explicit ChannelImpl(AgentImpl* agent): agent_(agent) {}
   virtual ~ChannelImpl() {}
  private:
-  void sendProtocolResponse(int callId, const StringView& message) override {
-    sendMessageToFrontend(message);
+  void sendResponse(
+      int callId,
+      std::unique_ptr<v8_inspector::StringBuffer> message) override {
+    sendMessageToFrontend(message->string());
   }
 
-  void sendProtocolNotification(const StringView& message) override {
-    sendMessageToFrontend(message);
+  void sendNotification(
+      std::unique_ptr<v8_inspector::StringBuffer> message) override {
+    sendMessageToFrontend(message->string());
   }
 
   void flushProtocolNotifications() override { }
@@ -266,7 +269,7 @@ class V8NodeInspector : public v8_inspector::V8InspectorClient {
                     terminated_(false),
                     running_nested_loop_(false),
                     inspector_(V8Inspector::create(env->isolate(), this)) {
-    const uint8_t CONTEXT_NAME[] = "Node.js Main Context";
+    const uint8_t CONTEXT_NAME[] = "Electron Main Context";
     StringView context_name(CONTEXT_NAME, sizeof(CONTEXT_NAME) - 1);
     v8_inspector::V8ContextInfo info(env->context(), 1, context_name);
     inspector_->contextCreated(info);

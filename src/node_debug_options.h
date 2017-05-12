@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "node.h"
+
 // Forward declaration to break recursive dependency chain with src/env.h.
 namespace node {
 
@@ -14,7 +16,7 @@ enum class DebugAgentType {
 #endif  // HAVE_INSPECTOR
 };
 
-class DebugOptions {
+class NODE_EXTERN DebugOptions {
  public:
   DebugOptions();
   bool ParseOption(const std::string& option);
