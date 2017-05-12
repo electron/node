@@ -553,7 +553,7 @@ bool Agent::Start(v8::Platform* platform, const char* path,
   client_ =
       std::unique_ptr<NodeInspectorClient>(
           new NodeInspectorClient(parent_env_, platform));
-  client_->contextCreated(parent_env_->context(), "Node.js Main Context");
+  client_->contextCreated(parent_env_->context(), "Electron Main Context");
   platform_ = platform;
   CHECK_EQ(0, uv_async_init(uv_default_loop(),
                             &start_io_thread_async,
