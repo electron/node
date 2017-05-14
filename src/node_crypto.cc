@@ -5077,14 +5077,15 @@ void ECDH::ComputeSecret(const FunctionCallbackInfo<Value>& args) {
     return;
 
   // NOTE: field_size is in bits
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
   int field_size = EC_GROUP_get_degree(ecdh->group_);
   size_t out_len = (field_size + 7) / 8;
-  char* out = node::Malloc(out_len);
+  char* out = static_cast<char*>(allocator->AllocateUninitialized(out_len));
 
   int r = ECDH_compute_key(out, out_len, pub, ecdh->key_, nullptr);
   EC_POINT_free(pub);
   if (!r) {
-    free(out);
+    allocator->Free(out, out_len);
     return env->ThrowError("Failed to compute ECDH key");
   }
 
@@ -5114,7 +5115,9 @@ void ECDH::GetPublicKey(const FunctionCallbackInfo<Value>& args) {
   if (size == 0)
     return env->ThrowError("Failed to get public key length");
 
-  unsigned char* out = node::Malloc<unsigned char>(size);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  unsigned char* out =
+      static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
 
   int r = EC_POINT_point2oct(ecdh->group_, pub, form, out, size, nullptr);
   if (r != size) {
@@ -5138,8 +5141,10 @@ void ECDH::GetPrivateKey(const FunctionCallbackInfo<Value>& args) {
   if (b == nullptr)
     return env->ThrowError("Failed to get ECDH private key");
 
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
   int size = BN_num_bytes(b);
-  unsigned char* out = node::Malloc<unsigned char>(size);
+  unsigned char* out =
+      static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
 
   if (size != BN_bn2bin(b, out)) {
     free(out);
@@ -5271,7 +5276,8 @@ class PBKDF2Request : public AsyncWrap {
         saltlen_(saltlen),
         salt_(salt),
         keylen_(keylen),
-        key_(node::Malloc(keylen)),
+        key_(static_cast<char*>(env->isolate()->GetArrayBufferAllocator()->
+                 AllocateUninitialized(keylen))),
         iter_(iter) {
     Wrap(object, this);
   }
@@ -5285,7 +5291,7 @@ class PBKDF2Request : public AsyncWrap {
     salt_ = nullptr;
     saltlen_ = 0;
 
-    free(key_);
+    env()->isolate()->GetArrayBufferAllocator()->Free(key_, keylen_);
     key_ = nullptr;
     keylen_ = 0;
 
@@ -5532,9 +5538,10 @@ class RandomBytesRequest : public AsyncWrap {
   }
 
   inline void release() {
+    size_t free_size = size_;
     size_ = 0;
     if (free_mode_ == FREE_DATA) {
-      free(data_);
+      env()->isolate()->GetArrayBufferAllocator()->Free(data_, free_size);
       data_ = nullptr;
     }
   }
@@ -5657,7 +5664,8 @@ void RandomBytes(const FunctionCallbackInfo<Value>& args) {
 
   Local<Object> obj = env->randombytes_constructor_template()->
       NewInstance(env->context()).ToLocalChecked();
-  char* data = node::Malloc(size);
+  char* data = static_cast<char*>(
+      env->isolate()->GetArrayBufferAllocator()->AllocateUninitialized(size));
   RandomBytesRequest* req =
       new RandomBytesRequest(env,
                              obj,
