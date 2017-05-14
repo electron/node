@@ -149,8 +149,12 @@ namespace {
 // DeserializerDelegate understands how to unpack.
 class SerializerDelegate : public ValueSerializer::Delegate {
  public:
-  SerializerDelegate(Environment* env, Local<Context> context, Message* m)
-      : env_(env), context_(context), msg_(m) {}
+  SerializerDelegate(
+    Environment* env,
+    Local<Context> context,
+    Message* m,
+    v8::ArrayBuffer::Allocator *allocator)
+    : env_(env), context_(context), msg_(m), allocator_(allocator) {}
 
   void ThrowDataCloneError(Local<String> message) override {
     env_->isolate()->ThrowException(Exception::Error(message));
@@ -184,6 +188,18 @@ class SerializerDelegate : public ValueSerializer::Delegate {
     seen_shared_array_buffers_.push_back(shared_array_buffer);
     msg_->AddSharedArrayBuffer(reference);
     return Just(i);
+  }
+
+  void FreeBufferMemory(void* buffer) override {
+    return allocator_->Free(buffer);
+  }
+
+  void* ReallocateBufferMemory(void* old_buffer,
+                               size_t size,
+                               size_t* actual_size) override {
+    auto result = allocator_->Realloc(old_buffer, size);
+    *actual_size = result ? size :0;
+    return result;
   }
 
   void Finish() {
