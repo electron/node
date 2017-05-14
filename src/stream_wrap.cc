@@ -176,7 +176,9 @@ void LibuvStreamWrap::OnAlloc(uv_handle_t* handle,
 
 
 void LibuvStreamWrap::OnAllocImpl(size_t size, uv_buf_t* buf, void* ctx) {
-  buf->base = node::Malloc(size);
+  auto* wrap = static_cast<LibuvStreamWrap*>(ctx);
+  auto* allocator = wrap->env()->isolate()->GetArrayBufferAllocator();
+  buf->base = static_cast<char*>(allocator->AllocateUninitialized(size));
   buf->len = size;
 }
 
@@ -208,6 +210,7 @@ void LibuvStreamWrap::OnReadImpl(ssize_t nread,
                             void* ctx) {
   LibuvStreamWrap* wrap = static_cast<LibuvStreamWrap*>(ctx);
   Environment* env = wrap->env();
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -215,19 +218,18 @@ void LibuvStreamWrap::OnReadImpl(ssize_t nread,
 
   if (nread < 0)  {
     if (buf->base != nullptr)
-      free(buf->base);
+      allocator->Free(buf->base, buf->len);
     wrap->EmitData(nread, Local<Object>(), pending_obj);
     return;
   }
 
   if (nread == 0) {
     if (buf->base != nullptr)
-      free(buf->base);
+      allocator->Free(buf->base, buf->len);
     return;
   }
 
   CHECK_LE(static_cast<size_t>(nread), buf->len);
-  char* base = node::Realloc(buf->base, nread);
 
   if (pending == UV_TCP) {
     pending_obj = AcceptHandle<TCPWrap, uv_tcp_t>(env, wrap);
@@ -239,7 +241,10 @@ void LibuvStreamWrap::OnReadImpl(ssize_t nread,
     CHECK_EQ(pending, UV_UNKNOWN_HANDLE);
   }
 
-  Local<Object> obj = Buffer::New(env, base, nread).ToLocalChecked();
+  // Note that nread may be smaller thant buf->len, in that case the length
+  // passed to ArrayBufferAllocator::Free would not be the correct one, but
+  // it should be fine unless embedder is using some unusual memory allocator.
+  Local<Object> obj = Buffer::New(env, buf->base, nread).ToLocalChecked();
   wrap->EmitData(nread, obj, pending_obj);
 }
 

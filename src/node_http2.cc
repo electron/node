@@ -1148,7 +1148,8 @@ void Http2Stream::OnTrailers(const SubmitTrailers& submit_trailers) {
 inline void Http2Stream::AddChunk(const uint8_t* data, size_t len) {
   char* buf = nullptr;
   if (len > 0) {
-    buf = Malloc<char>(len);
+    auto* allocator = env()->isolate()->GetArrayBufferAllocator();
+    buf = static_cast<char*>(allocator->AllocateUninitialized(len));
     memcpy(buf, data, len);
   }
   data_chunks_.emplace(uv_buf_init(buf, len));
@@ -1213,7 +1214,8 @@ inline void Http2Stream::Destroy() {
   // Free any remaining incoming data chunks.
   while (!data_chunks_.empty()) {
     uv_buf_t buf = data_chunks_.front();
-    free(buf.base);
+    auto* allocator = env()->isolate()->GetArrayBufferAllocator();
+    allocator->Free(buf.base, buf.len);
     data_chunks_.pop();
   }
 
