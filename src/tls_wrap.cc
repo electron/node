@@ -674,7 +674,10 @@ void TLSWrap::OnDestructImpl(void* ctx) {
 
 
 void TLSWrap::OnAllocSelf(size_t suggested_size, uv_buf_t* buf, void* ctx) {
-  buf->base = node::Malloc(suggested_size);
+  auto* wrap = static_cast<TLSWrap*>(ctx);
+  auto* allocator = wrap->env()->isolate()->GetArrayBufferAllocator();
+  buf->base =
+      static_cast<char*>(allocator->AllocateUninitialized(suggested_size));
   buf->len = suggested_size;
 }
 
