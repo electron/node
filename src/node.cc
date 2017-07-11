@@ -2157,9 +2157,9 @@ void FatalException(Isolate* isolate,
 
 void FatalException(Isolate* isolate, const TryCatch& try_catch) {
   HandleScope scope(isolate);
-  if (!try_catch.IsVerbose()) {
+  // if (!try_catch.IsVerbose()) {
     FatalException(isolate, try_catch.Exception(), try_catch.Message());
-  }
+  // }
 }
 
 
