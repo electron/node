@@ -600,6 +600,10 @@
       ],
 
       'variables': {
+        'variables': {
+          'OBJ_DIR%': '',
+        },
+        'OBJ_DIR%': '<(OBJ_DIR)',
         'OBJ_PATH': '<(OBJ_DIR)/node/src',
         'OBJ_GEN_PATH': '<(OBJ_DIR)/node/gen',
         'OBJ_TRACING_PATH': '<(OBJ_DIR)/node/src/tracing',
