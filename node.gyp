@@ -916,6 +916,10 @@
       ],
 
       'variables': {
+         'variables': {
+            'OBJ_DIR%': '',
+         },
+        'OBJ_DIR%': '<(OBJ_DIR)',
         'OBJ_PATH': '<(OBJ_DIR)/<(node_lib_target_name)/src',
         'OBJ_GEN_PATH': '<(OBJ_DIR)/<(node_lib_target_name)/gen',
         'OBJ_TRACING_PATH': '<(OBJ_DIR)/<(node_lib_target_name)/src/tracing',
