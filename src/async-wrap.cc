@@ -715,10 +715,12 @@ Local<Value> AsyncWrap::MakeCallback(const Local<Function> cb,
     env()->isolate()->RunMicrotasks();
   }
 
+#if 0
   // Make sure the stack unwound properly. If there are nested MakeCallback's
   // then it should return early and not reach this code.
   CHECK_EQ(env()->current_async_id(), 0);
   CHECK_EQ(env()->trigger_id(), 0);
+#endif
 
   Local<Object> process = env()->process_object();
 
@@ -733,9 +735,11 @@ Local<Value> AsyncWrap::MakeCallback(const Local<Function> cb,
                                             0,
                                             nullptr);
 
+#if 0
   // Make sure the stack unwound properly.
   CHECK_EQ(env()->current_async_id(), 0);
   CHECK_EQ(env()->trigger_id(), 0);
+#endif
 
   return rcheck.IsEmpty() ? Local<Value>() : ret_v;
 }

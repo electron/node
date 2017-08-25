@@ -1364,10 +1364,12 @@ MaybeLocal<Value> MakeCallback(Environment* env,
     env->isolate()->RunMicrotasks();
   }
 
+#if 0
   // Make sure the stack unwound properly. If there are nested MakeCallback's
   // then it should return early and not reach this code.
   CHECK_EQ(env->current_async_id(), asyncContext.async_id);
   CHECK_EQ(env->trigger_id(), asyncContext.trigger_async_id);
+#endif
 
   Local<Object> process = env->process_object();
 
