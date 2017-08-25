@@ -1451,10 +1451,12 @@ void InternalCallbackScope::Close() {
     env_->isolate()->RunMicrotasks();
   }
 
+#if 0
   // Make sure the stack unwound properly. If there are nested MakeCallback's
   // then it should return early and not reach this code.
   CHECK_EQ(env_->execution_async_id(), 0);
   CHECK_EQ(env_->trigger_async_id(), 0);
+#endif
 
   Local<Object> process = env_->process_object();
 
@@ -1463,8 +1465,10 @@ void InternalCallbackScope::Close() {
     return;
   }
 
+#if 0
   CHECK_EQ(env_->execution_async_id(), 0);
   CHECK_EQ(env_->trigger_async_id(), 0);
+#endif
 
   if (env_->tick_callback_function()->Call(process, 0, nullptr).IsEmpty()) {
     failed_ = true;
