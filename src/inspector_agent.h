@@ -11,17 +11,19 @@
 
 #include "node.h"
 #include "node_debug_options.h"
+#include "node_platform.h"
 #include "v8.h"
+
+// Forward declaration to break recursive dependency chain with src/env.h.
+namespace node {
+class Environment;
+}  // namespace node
 
 namespace v8_inspector {
 class StringView;
 }  // namespace v8_inspector
 
 namespace node {
-// Forward declaration to break recursive dependency chain with src/env.h.
-class Environment;
-class NodePlatform;
-
 namespace inspector {
 
 class InspectorSessionDelegate {
