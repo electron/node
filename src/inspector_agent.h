@@ -11,11 +11,11 @@
 
 #include "node.h"
 #include "node_debug_options.h"
+#include "node_platform.h"
 
 // Forward declaration to break recursive dependency chain with src/env.h.
 namespace node {
 class Environment;
-class NodePlatform;
 }  // namespace node
 
 #include "v8.h"
