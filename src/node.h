@@ -214,6 +214,7 @@ NODE_EXTERN void Init(int* argc,
 
 class IsolateData;
 class Environment;
+class NodePlatform;
 
 class MultiIsolatePlatform : public v8::Platform {
  public:
