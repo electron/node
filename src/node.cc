@@ -4778,6 +4778,19 @@ void FreeEnvironment(Environment* env) {
 }
 
 
+NodePlatform* CreatePlatform(
+    int thread_pool_size,
+    uv_loop_t* loop,
+    v8::TracingController* tracing_controller) {
+  return new NodePlatform(thread_pool_size, loop, tracing_controller);
+}
+
+
+void FreePlatform(NodePlatform* platform) {
+  delete platform;
+}
+
+
 inline int Start(Isolate* isolate, IsolateData* isolate_data,
                  int argc, const char* const* argv,
                  int exec_argc, const char* const* exec_argv) {
