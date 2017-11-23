@@ -177,7 +177,7 @@ void LibuvStreamWrap::OnAlloc(uv_handle_t* handle,
 
 
 void LibuvStreamWrap::OnAllocImpl(size_t size, uv_buf_t* buf, void* ctx) {
-  auto* wrap = static_cast<StreamWrap*>(ctx);
+  auto* wrap = static_cast<LibuvStreamWrap*>(ctx);
   auto* allocator = wrap->env()->isolate()->GetArrayBufferAllocator();
   buf->base = static_cast<char*>(allocator->AllocateUninitialized(size));
   buf->len = size;
