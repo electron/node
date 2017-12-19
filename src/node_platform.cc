@@ -138,10 +138,6 @@ double NodePlatform::MonotonicallyIncreasingTime() {
   return uv_hrtime() / 1e9;
 }
 
-double NodePlatform::CurrentClockTimeMillis() {
-  return SystemClockTimeMillis();
-}
-
 TracingController* NodePlatform::GetTracingController() {
   return tracing_controller_.get();
 }
