@@ -1846,7 +1846,8 @@ void SSLWrap<Base>::GetSession(const FunctionCallbackInfo<Value>& args) {
   int slen = i2d_SSL_SESSION(sess, nullptr);
   CHECK_GT(slen, 0);
 
-  char* sbuf = Malloc(slen);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* sbuf = static_cast<char*>(allocator->AllocateUninitialized(slen));
   unsigned char* p = reinterpret_cast<unsigned char*>(sbuf);
   i2d_SSL_SESSION(sess, &p);
   args.GetReturnValue().Set(Buffer::New(env, sbuf, slen).ToLocalChecked());
@@ -3592,8 +3593,9 @@ bool CipherBase::Update(const char* data,
     auth_tag_len_ = 0;
   }
 
+  auto* allocator = env()->isolate()->GetArrayBufferAllocator();
   *out_len = len + EVP_CIPHER_CTX_block_size(&ctx_);
-  *out = Malloc<unsigned char>(static_cast<size_t>(*out_len));
+  *out = static_cast<unsigned char*>(allocator->AllocateUninitialized(*out_len));
   return EVP_CipherUpdate(&ctx_,
                           *out,
                           out_len,
@@ -3627,7 +3629,8 @@ void CipherBase::Update(const FunctionCallbackInfo<Value>& args) {
   }
 
   if (!r) {
-    free(out);
+    auto* allocator = env->isolate()->GetArrayBufferAllocator();
+    allocator->Free(out, out_len);
     return ThrowCryptoError(env,
                             ERR_get_error(),
                             "Trying to add data in unsupported state");
@@ -3663,8 +3666,9 @@ bool CipherBase::Final(unsigned char** out, int *out_len) {
   if (!initialised_)
     return false;
 
-  *out = Malloc<unsigned char>(
-      static_cast<size_t>(EVP_CIPHER_CTX_block_size(&ctx_)));
+  auto* allocator = env()->isolate()->GetArrayBufferAllocator();
+  *out = static_cast<unsigned char*>(allocator->AllocateUninitialized(
+      EVP_CIPHER_CTX_block_size(&ctx_)));
   int r = EVP_CipherFinal_ex(&ctx_, *out, out_len);
 
   if (r == 1 && kind_ == kCipher && IsAuthenticatedMode()) {
@@ -3696,7 +3700,8 @@ void CipherBase::Final(const FunctionCallbackInfo<Value>& args) {
   bool r = cipher->Final(&out_value, &out_len);
 
   if (out_len <= 0 || !r) {
-    free(out_value);
+    auto* allocator = env->isolate()->GetArrayBufferAllocator();
+    allocator->Free(out_value, out_len);
     out_value = nullptr;
     out_len = 0;
     if (!r) {
@@ -4490,7 +4495,8 @@ void Verify::VerifyFinal(const FunctionCallbackInfo<Value>& args) {
 template <PublicKeyCipher::Operation operation,
           PublicKeyCipher::EVP_PKEY_cipher_init_t EVP_PKEY_cipher_init,
           PublicKeyCipher::EVP_PKEY_cipher_t EVP_PKEY_cipher>
-bool PublicKeyCipher::Cipher(const char* key_pem,
+bool PublicKeyCipher::Cipher(Environment* env,
+                             const char* key_pem,
                              int key_pem_len,
                              const char* passphrase,
                              int padding,
@@ -4503,6 +4509,7 @@ bool PublicKeyCipher::Cipher(const char* key_pem,
   BIO* bp = nullptr;
   X509* x509 = nullptr;
   bool fatal = true;
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
 
   bp = BIO_new_mem_buf(const_cast<char*>(key_pem), key_pem_len);
   if (bp == nullptr)
@@ -4555,7 +4562,7 @@ bool PublicKeyCipher::Cipher(const char* key_pem,
   if (EVP_PKEY_cipher(ctx, nullptr, out_len, data, len) <= 0)
     goto exit;
 
-  *out = Malloc<unsigned char>(*out_len);
+  *out = static_cast<unsigned char*>(allocator->AllocateUninitialized(*out_len));
 
   if (EVP_PKEY_cipher(ctx, *out, out_len, data, len) <= 0)
     goto exit;
@@ -4600,6 +4607,7 @@ void PublicKeyCipher::Cipher(const FunctionCallbackInfo<Value>& args) {
   ClearErrorOnReturn clear_error_on_return;
 
   bool r = Cipher<operation, EVP_PKEY_cipher_init, EVP_PKEY_cipher>(
+      env,
       kbuf,
       klen,
       args.Length() >= 3 && !args[2]->IsNull() ? *passphrase : nullptr,
@@ -4610,7 +4618,8 @@ void PublicKeyCipher::Cipher(const FunctionCallbackInfo<Value>& args) {
       &out_len);
 
   if (out_len == 0 || !r) {
-    free(out_value);
+    auto* allocator = env->isolate()->GetArrayBufferAllocator();
+    allocator->Free(out_value, out_len);
     out_value = nullptr;
     out_len = 0;
     if (!r) {
@@ -4797,7 +4806,8 @@ void DiffieHellman::GenerateKeys(const FunctionCallbackInfo<Value>& args) {
   }
 
   size_t size = BN_num_bytes(diffieHellman->dh->pub_key);
-  char* data = Malloc(size);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* data = static_cast<char*>(allocator->AllocateUninitialized(size));
   BN_bn2bin(diffieHellman->dh->pub_key, reinterpret_cast<unsigned char*>(data));
   args.GetReturnValue().Set(Buffer::New(env, data, size).ToLocalChecked());
 }
@@ -4815,7 +4825,8 @@ void DiffieHellman::GetField(const FunctionCallbackInfo<Value>& args,
   if (num == nullptr) return env->ThrowError(err_if_null);
 
   size_t size = BN_num_bytes(num);
-  char* data = Malloc(size);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* data = static_cast<char*>(allocator->AllocateUninitialized(size));
   BN_bn2bin(num, reinterpret_cast<unsigned char*>(data));
   args.GetReturnValue().Set(Buffer::New(env, data, size).ToLocalChecked());
 }
@@ -4866,7 +4877,8 @@ void DiffieHellman::ComputeSecret(const FunctionCallbackInfo<Value>& args) {
   }
 
   int dataSize = DH_size(diffieHellman->dh);
-  char* data = Malloc(dataSize);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* data = static_cast<char*>(allocator->AllocateUninitialized(dataSize));
 
   int size = DH_compute_key(reinterpret_cast<unsigned char*>(data),
                             key,
@@ -4878,7 +4890,7 @@ void DiffieHellman::ComputeSecret(const FunctionCallbackInfo<Value>& args) {
 
     checked = DH_check_pub_key(diffieHellman->dh, key, &checkResult);
     BN_free(key);
-    free(data);
+    allocator->Free(data, dataSize);
 
     if (!checked) {
       return ThrowCryptoError(env, ERR_get_error(), "Invalid Key");
@@ -5119,7 +5131,7 @@ void ECDH::GetPublicKey(const FunctionCallbackInfo<Value>& args) {
 
   int r = EC_POINT_point2oct(ecdh->group_, pub, form, out, size, nullptr);
   if (r != size) {
-    free(out);
+    allocator->Free(out, size);
     return env->ThrowError("Failed to get public key");
   }
 
@@ -5145,7 +5157,7 @@ void ECDH::GetPrivateKey(const FunctionCallbackInfo<Value>& args) {
       static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
 
   if (size != BN_bn2bin(b, out)) {
-    free(out);
+    allocator->Free(out, size);
     return env->ThrowError("Failed to convert ECDH private key to Buffer");
   }
 
@@ -5882,10 +5894,11 @@ void VerifySpkac(const FunctionCallbackInfo<Value>& args) {
 }
 
 
-char* ExportPublicKey(const char* data, int len, size_t* size) {
+char* ExportPublicKey(Environment* env, const char* data, int len, size_t* size) {
   char* buf = nullptr;
   EVP_PKEY* pkey = nullptr;
   NETSCAPE_SPKI* spki = nullptr;
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
 
   BIO* bio = BIO_new(BIO_s_mem());
   if (bio == nullptr)
@@ -5906,7 +5919,7 @@ char* ExportPublicKey(const char* data, int len, size_t* size) {
   BIO_get_mem_ptr(bio, &ptr);
 
   *size = ptr->length;
-  buf = Malloc(*size);
+  buf = static_cast<char*>(allocator->AllocateUninitialized(*size));
   memcpy(buf, ptr->data, *size);
 
  exit:
@@ -5939,7 +5952,7 @@ void ExportPublicKey(const FunctionCallbackInfo<Value>& args) {
   CHECK_NE(data, nullptr);
 
   size_t pkey_size;
-  char* pkey = ExportPublicKey(data, length, &pkey_size);
+  char* pkey = ExportPublicKey(env, data, length, &pkey_size);
   if (pkey == nullptr)
     return args.GetReturnValue().SetEmptyString();
 
