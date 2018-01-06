@@ -477,7 +477,7 @@ v8::MaybeLocal<v8::Value> InternalMakeCallback(
     v8::Local<v8::Value> argv[],
     async_context asyncContext);
 
-class InternalCallbackScope {
+class NODE_EXTERN InternalCallbackScope {
  public:
   // Tell the constructor whether its `object` parameter may be empty or not.
   enum ResourceExpectation { kRequireResource, kAllowEmptyResource };
