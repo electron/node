@@ -255,7 +255,7 @@ const uint64_t kNoId = 0;
 
 extern intptr_t kRuntimeCallStatsTracingEnabled;
 
-class TraceEventHelper {
+class NODE_EXTERN TraceEventHelper {
  public:
   static v8::TracingController* GetTracingController();
   static void SetTracingController(v8::TracingController* controller);
