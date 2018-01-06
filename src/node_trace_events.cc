@@ -1,6 +1,7 @@
 #include "node.h"
 #include "node_internals.h"
 #include "tracing/agent.h"
+#include "tracing/trace_event.h"
 #include "env.h"
 #include "base_object-inl.h"
 
