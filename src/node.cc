@@ -4364,7 +4364,7 @@ uv_loop_t* GetCurrentEventLoop(v8::Isolate* isolate) {
 
 
 void AtExit(void (*cb)(void* arg), void* arg) {
-  auto env = Environment::GetThreadLocalEnv();
+  auto env = node::Environment::GetCurrent(v8::Isolate::GetCurrent());
   AtExit(env, cb, arg);
 }
 
