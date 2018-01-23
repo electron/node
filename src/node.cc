@@ -4698,7 +4698,7 @@ static uv_key_t thread_local_env;
 
 
 void AtExit(void (*cb)(void* arg), void* arg) {
-  auto env = static_cast<Environment*>(uv_key_get(&thread_local_env));
+  auto env = node::Environment::GetCurrent(v8::Isolate::GetCurrent());
   AtExit(env, cb, arg);
 }
 
