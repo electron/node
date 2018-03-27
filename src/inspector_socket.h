@@ -6,6 +6,7 @@
 #include "util-inl.h"
 #include "uv.h"
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,7 @@ struct http_parsing_state_s {
   std::string ws_key;
   std::string path;
   std::string current_header;
+  std::map<std::string, std::string> headers;
 };
 
 struct ws_state_s {
