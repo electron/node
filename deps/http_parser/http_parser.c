@@ -374,6 +374,8 @@ enum header_states
 
   , h_connection
   , h_content_length
+  , h_content_length_num
+  , h_content_length_ws
   , h_transfer_encoding
   , h_upgrade
 
@@ -1475,6 +1477,7 @@ reexecute:
             }
 
             parser->content_length = ch - '0';
+            parser->header_state = h_content_length_num;
             break;
 
           case h_connection:
@@ -1562,10 +1565,18 @@ reexecute:
               break;
 
             case h_content_length:
+              if (ch == ' ') break;
+              h_state = h_content_length_num;
+              /* FALLTHROUGH */
+
+            case h_content_length_num:
             {
               uint64_t t;
 
-              if (ch == ' ') break;
+              if (ch == ' ') {
+                h_state = h_content_length_ws;
+                break;
+              }
 
               if (UNLIKELY(!IS_NUM(ch))) {
                 SET_ERRNO(HPE_INVALID_CONTENT_LENGTH);
@@ -1587,6 +1598,12 @@ reexecute:
               parser->content_length = t;
               break;
             }
+
+            case h_content_length_ws:
+              if (ch == ' ') break;
+              SET_ERRNO(HPE_INVALID_CONTENT_LENGTH);
+              parser->header_state = h_state;
+              goto error;
 
             /* Transfer-Encoding: chunked */
             case h_matching_transfer_encoding_chunked:
