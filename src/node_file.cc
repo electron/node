@@ -858,7 +858,7 @@ static void StatNoException(const FunctionCallbackInfo<Value>& args) {
     args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
   else
     FillStatsArray(env->fs_stats_field_array(),
-                   static_cast<const uv_stat_t*>(SYNC_REQ.ptr));
+                   static_cast<const uv_stat_t*>(req_wrap.req.ptr));
 }
 
 static void LStat(const FunctionCallbackInfo<Value>& args) {
@@ -908,7 +908,7 @@ static void LStatNoException(const FunctionCallbackInfo<Value>& args) {
     args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
   else
     FillStatsArray(env->fs_stats_field_array(),
-                   static_cast<const uv_stat_t*>(SYNC_REQ.ptr));
+                   static_cast<const uv_stat_t*>(req_wrap.req.ptr));
 }
 
 static void FStat(const FunctionCallbackInfo<Value>& args) {
