@@ -852,7 +852,7 @@ static void StatNoException(const FunctionCallbackInfo<Value>& args) {
 
   String::Utf8Value path(args[0]);
 
-  fs_req_wrap req_wrap;
+  FSReqWrapSync req_wrap;
   int result = uv_fs_stat(uv_default_loop(), &req_wrap.req, *path, NULL);
   if (result < 0)
     args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
@@ -902,7 +902,7 @@ static void LStatNoException(const FunctionCallbackInfo<Value>& args) {
     return;
   }
 
-  fs_req_wrap req_wrap;
+  FSReqWrapSync req_wrap;
   int result = uv_fs_lstat(uv_default_loop(), &req_wrap.req, *path, NULL);
   if (result < 0)
     args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
