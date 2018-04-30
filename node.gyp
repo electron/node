@@ -199,11 +199,6 @@
       }, {
         'use_openssl_def%': 0,
       }],
-      [ 'OS=="win"', {
-        'copy_command%': 'copy',
-      }, {
-        'copy_command%': 'cp',
-      }],
     ],
   },
 
@@ -690,7 +685,7 @@
               'action_name': 'v8_inspector_copy_protocol_to_intermediate_folder',
               'inputs': [ 'deps/v8/src/inspector/js_protocol.pdl' ],
               'outputs': [ '<(SHARED_INTERMEDIATE_DIR)/js_protocol.pdl' ],
-              'action': [ '<(copy_command)', '<@(_inputs)', '<(SHARED_INTERMEDIATE_DIR)' ],
+              'action': [ 'cp', '<@(_inputs)', '<(SHARED_INTERMEDIATE_DIR)' ],
             },
             {
               'action_name': 'v8_inspector_convert_protocol_to_json',
