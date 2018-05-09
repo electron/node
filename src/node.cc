@@ -321,7 +321,7 @@ static struct {
   }
 
   void DrainVMTasks(Isolate* isolate) {
-    platform_->DrainBackgroundTasks(isolate);
+    platform_->DrainTasks(isolate);
   }
 
   void CancelVMTasks(Isolate* isolate) {
