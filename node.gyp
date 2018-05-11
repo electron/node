@@ -24,6 +24,7 @@
     'node_core_target_name%': 'node',
     'node_lib_target_name%': 'node_lib',
     'node_intermediate_lib_type%': 'static_library',
+    'config_gypi%': './config.gypi',
     'library_files': [
       'lib/internal/bootstrap_node.js',
       'lib/async_hooks.js',
@@ -712,7 +713,7 @@
           'process_outputs_as_sources': 1,
           'inputs': [
             '<@(library_files)',
-            './config.gypi',
+            '<(config_gypi)',
           ],
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/node_javascript.cc',
