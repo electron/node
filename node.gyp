@@ -23,6 +23,7 @@
     'node_core_target_name%': 'node',
     'node_lib_target_name%': 'node_lib',
     'node_intermediate_lib_type%': 'static_library',
+    'config_gypi%': './config.gypi',
     'library_files': [
       'lib/internal/bootstrap/loaders.js',
       'lib/internal/bootstrap/node.js',
@@ -695,7 +696,7 @@
           'process_outputs_as_sources': 1,
           'inputs': [
             '<@(library_files)',
-            './config.gypi',
+            '<(config_gypi)',
             'tools/check_macros.py'
           ],
           'outputs': [

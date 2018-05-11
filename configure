@@ -559,6 +559,18 @@ parser.add_option('-C',
     dest='compile_commands_json',
     help=optparse.SUPPRESS_HELP)
 
+# Electron-specific. Used to assist in calling the gyp build from GN.
+parser.add_option('--config-out-dir',
+    action='store',
+    default='.',
+    dest='config_out_dir',
+    help='output directory to write .gypi files to')
+
+parser.add_option('--no-run-gyp',
+    action='store_false',
+    dest='run_gyp',
+    help='suppress running gyp')
+
 (options, args) = parser.parse_args()
 
 # Expand ~ in the install prefix now, it gets written to multiple files.
@@ -1143,7 +1155,7 @@ def configure_static(o):
 
 
 def write(filename, data):
-  filename = filename
+  filename = os.path.join(options.config_out_dir, filename)
   print('creating %s' % filename)
   f = open(filename, 'w+')
   f.write(data)
@@ -1555,4 +1567,5 @@ gyp_args += args
 if warn.warned:
   warn('warnings were emitted in the configure phase')
 
-run_gyp(gyp_args)
+if options.run_gyp:
+  run_gyp(gyp_args)
