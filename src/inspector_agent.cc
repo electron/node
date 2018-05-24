@@ -304,7 +304,10 @@ class NodeInspectorClient : public V8InspectorClient {
       : env_(env), platform_(platform), terminated_(false),
         running_nested_loop_(false) {
     client_ = V8Inspector::create(env->isolate(), this);
-    contextCreated(env->context(), "Electron Main Context");
+    // TODO(bnoordhuis) Make name configurable from src/node.cc.
+    ContextInfo info("Electron Main Context");
+    info.is_default = true;
+    contextCreated(env->context(), info);
   }
 
   void runMessageLoopOnPause(int context_group_id) override {
