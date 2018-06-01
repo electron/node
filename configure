@@ -561,6 +561,7 @@ parser.add_option('--config-out-dir',
     dest='config_out_dir',
     help='output directory to write .gypi files to')
 
+# Electron-specific. When calling configure from the GN build, we will run gyp ourselves.
 parser.add_option('--no-run-gyp',
     action='store_false',
     dest='run_gyp',
