@@ -89,6 +89,8 @@ class NodeTestFixture : public ::testing::Test {
                                      &node::FreeArrayBufferAllocator);
     isolate_ = NewIsolate(allocator.get(), &current_loop);
     CHECK_NE(isolate_, nullptr);
+    platform->RegisterIsolate(isolate_, &current_loop);
+    v8::Isolate::Initialize(isolate_, params);
   }
 
   virtual void TearDown() {
