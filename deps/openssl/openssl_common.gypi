@@ -55,9 +55,7 @@
       ],
     }, {
       # linux and others
-      'cflags': ['-Wno-missing-field-initializers',
-                 ## TODO: check gcc_version>=4.3
-                 '-Wno-old-style-declaration'],
+      'cflags': ['-Wno-missing-field-initializers'],
       'defines': [
         'OPENSSLDIR="/etc/ssl"',
         'ENGINESDIR="/dev/null"',
