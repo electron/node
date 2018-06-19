@@ -6200,10 +6200,17 @@ void InitCryptoOnce() {
     ENGINE_load_builtin_engines();
 #endif
     ERR_clear_error();
+#ifdef OPENSSL_IS_BORINGSSL  // Once boringssl commit a02ed04d5 is in the past, we can remove this patch
+    CONF_modules_load_file(
+        nullptr,
+        nullptr,
+        CONF_MFLAGS_DEFAULT_SECTION);
+#else
     CONF_modules_load_file(
         openssl_config.c_str(),
         nullptr,
         CONF_MFLAGS_DEFAULT_SECTION);
+#endif
     int err = ERR_get_error();
     if (0 != err) {
       fprintf(stderr,
