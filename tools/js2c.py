@@ -236,7 +236,10 @@ static struct : public v8::String::ExternalStringResource {{
 
 INITIALIZER = """\
 CHECK(target->Set(env->context(),
-                  {key}.ToStringChecked(env->isolate()),
+                  v8::String::NewFromUtf8(env->isolate(),
+                                          {key}.data(),
+                                          v8::NewStringType::kNormal,
+                                          arraysize(raw_{key})).ToLocalChecked(),
                   {value}.ToStringChecked(env->isolate())).FromJust());
 """
 
