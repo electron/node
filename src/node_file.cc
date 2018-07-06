@@ -858,11 +858,13 @@ static void StatNoException(const FunctionCallbackInfo<Value>& args) {
 
   FSReqWrapSync req_wrap;
   int result = uv_fs_stat(uv_default_loop(), &req_wrap.req, *path, NULL);
-  if (result < 0)
+  if (result < 0) {
     args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
-  else
-    FillStatsArray(env->fs_stats_field_array(),
-                   static_cast<const uv_stat_t*>(req_wrap.req.ptr));
+  } else {
+    Local<Value> arr = node::FillGlobalStatsArray(env,
+        static_cast<const uv_stat_t*>(req_wrap.req.ptr));
+    args.GetReturnValue().Set(arr);
+  }
 }
 
 static void LStat(const FunctionCallbackInfo<Value>& args) {
@@ -908,11 +910,13 @@ static void LStatNoException(const FunctionCallbackInfo<Value>& args) {
 
   FSReqWrapSync req_wrap;
   int result = uv_fs_lstat(uv_default_loop(), &req_wrap.req, *path, NULL);
-  if (result < 0)
+  if (result < 0) {
     args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
-  else
-    FillStatsArray(env->fs_stats_field_array(),
-                   static_cast<const uv_stat_t*>(req_wrap.req.ptr));
+  } else {
+    Local<Value> arr = node::FillGlobalStatsArray(env,
+        static_cast<const uv_stat_t*>(req_wrap.req.ptr));
+    args.GetReturnValue().Set(arr);
+  }
 }
 
 static void FStat(const FunctionCallbackInfo<Value>& args) {
