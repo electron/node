@@ -47,6 +47,8 @@ typedef struct pollfd {
 #include <ws2tcpip.h>
 #include <windows.h>
 
+#include "crypto/wincrypt_shim.h"
+
 #include <process.h>
 #include <signal.h>
 #include <fcntl.h>
