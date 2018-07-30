@@ -205,7 +205,7 @@ const int CONTEXT_GROUP_ID = 1;
 
 std::string GetWorkerLabel(node::Environment* env) {
   std::ostringstream result;
-  result << "Worker[" << env->thread_id() << "]";
+  result << "Electron Worker[" << env->thread_id() << "]";
   return result.str();
 }
 
@@ -434,7 +434,7 @@ class NodeInspectorClient : public V8InspectorClient {
     client_ = V8Inspector::create(env->isolate(), this);
     // TODO(bnoordhuis) Make name configurable from src/node.cc.
     std::string name =
-        is_main_ ? GetHumanReadableProcessName() : GetWorkerLabel(env);
+        is_main_ ? "Electron Main Context" : GetWorkerLabel(env);
     ContextInfo info(name);
     info.is_default = true;
     contextCreated(env->context(), info);
