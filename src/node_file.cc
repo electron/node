@@ -852,6 +852,25 @@ static void Stat(const FunctionCallbackInfo<Value>& args) {
   }
 }
 
+static void StatNoException(const FunctionCallbackInfo<Value>& args) {
+  Environment* env = Environment::GetCurrent(args.GetIsolate());
+  HandleScope scope(env->isolate());
+   if (args.Length() < 1 || !args[0]->IsString()) {
+    args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
+    return;
+  }
+   String::Utf8Value path(args[0]);
+   FSReqWrapSync req_wrap;
+  int result = uv_fs_stat(uv_default_loop(), &req_wrap.req, *path, NULL);
+  if (result < 0) {
+    args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
+  } else {
+    Local<Value> arr = node::FillGlobalStatsArray(env,
+        static_cast<const uv_stat_t*>(req_wrap.req.ptr));
+    args.GetReturnValue().Set(arr);
+  }
+}
+
 static void LStat(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
 
@@ -879,6 +898,25 @@ static void LStat(const FunctionCallbackInfo<Value>& args) {
 
     Local<Value> arr = node::FillGlobalStatsArray(env,
         static_cast<const uv_stat_t*>(req_wrap_sync.req.ptr), use_bigint);
+    args.GetReturnValue().Set(arr);
+  }
+}
+
+static void LStatNoException(const FunctionCallbackInfo<Value>& args) {
+  Environment* env = Environment::GetCurrent(args.GetIsolate());
+  HandleScope scope(env->isolate());
+   String::Utf8Value path(args[0]);
+   if (args.Length() < 1 || !args[0]->IsString()) {
+    args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
+    return;
+  }
+   FSReqWrapSync req_wrap;
+  int result = uv_fs_lstat(uv_default_loop(), &req_wrap.req, *path, NULL);
+  if (result < 0) {
+    args.GetReturnValue().Set(v8::Boolean::New(env->isolate(), false));
+  } else {
+    Local<Value> arr = node::FillGlobalStatsArray(env,
+        static_cast<const uv_stat_t*>(req_wrap.req.ptr));
     args.GetReturnValue().Set(arr);
   }
 }
@@ -1916,7 +1954,9 @@ void Initialize(Local<Object> target,
   env->SetMethod(target, "internalModuleReadJSON", InternalModuleReadJSON);
   env->SetMethod(target, "internalModuleStat", InternalModuleStat);
   env->SetMethod(target, "stat", Stat);
+  env->SetMethod(target, "statNoException", StatNoException);
   env->SetMethod(target, "lstat", LStat);
+  env->SetMethod(target, "lstatNoException", LStatNoException);
   env->SetMethod(target, "fstat", FStat);
   env->SetMethod(target, "link", Link);
   env->SetMethod(target, "symlink", Symlink);
