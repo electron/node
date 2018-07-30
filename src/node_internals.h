@@ -31,7 +31,6 @@
 #include "env-inl.h"
 #include "uv.h"
 #include "v8.h"
-#include "tracing/trace_event.h"
 #include "node_perf_common.h"
 #include "node_debug_options.h"
 #include "node_api.h"
