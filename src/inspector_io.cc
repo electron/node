@@ -12,6 +12,8 @@
 #include "util.h"
 #include "zlib.h"
 
+#include "libplatform/libplatform.h"
+
 #include <deque>
 #include <string.h>
 #include <vector>
