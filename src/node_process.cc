@@ -3,6 +3,7 @@
 #include "base_object.h"
 #include "base_object-inl.h"
 #include "env-inl.h"
+#include "tracing/trace_event.h"
 #include "util-inl.h"
 #include "uv.h"
 #include "v8.h"

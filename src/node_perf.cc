@@ -1,5 +1,6 @@
 #include "node_internals.h"
 #include "node_perf.h"
+#include "tracing/trace_event.h"
 
 #ifdef __POSIX__
 #include <sys/time.h>  // gettimeofday

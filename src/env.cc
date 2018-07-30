@@ -7,6 +7,7 @@
 #include "node_context_data.h"
 #include "node_worker.h"
 #include "tracing/agent.h"
+#include "tracing/trace_event.h"
 #include "tracing/traced_value.h"
 
 #include <stdio.h>
