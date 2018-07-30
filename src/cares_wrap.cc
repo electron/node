@@ -26,6 +26,7 @@
 #include "node.h"
 #include "node_internals.h"
 #include "req_wrap-inl.h"
+#include "tracing/trace_event.h"
 #include "util-inl.h"
 #include "uv.h"
 

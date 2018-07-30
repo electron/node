@@ -3,6 +3,7 @@
 
 #include "env-inl.h"
 #include "debug_utils.h"
+#include "tracing/trace_event.h"
 #include "util.h"
 #include <algorithm>
 
