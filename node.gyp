@@ -524,8 +524,8 @@
             'v8_inspector_compress_protocol_json#host',
           ],
           'include_dirs': [
-            '<(SHARED_INTERMEDIATE_DIR)/include', # for inspector
-            '<(SHARED_INTERMEDIATE_DIR)',
+            # '<(SHARED_INTERMEDIATE_DIR)/include', # for inspector
+            # '<(SHARED_INTERMEDIATE_DIR)',
             '<(SHARED_INTERMEDIATE_DIR)/src', # for inspector
           ],
         }, {
