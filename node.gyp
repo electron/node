@@ -24,6 +24,7 @@
     'node_core_target_name%': 'node',
     'node_lib_target_name%': 'node_lib',
     'node_intermediate_lib_type%': 'static_library',
+    'config_gypi%': './config.gypi',
     'library_files': [
       'lib/internal/per_context.js',
       'lib/internal/bootstrap/cache.js',
@@ -720,6 +721,7 @@
           'inputs': [
             '<@(library_files)',
             './config.gypi',
+            '<(config_gypi)',
             'tools/check_macros.py'
           ],
           'outputs': [

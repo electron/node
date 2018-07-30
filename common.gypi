@@ -47,6 +47,9 @@
     # Don't use ICU data file (icudtl.dat) from V8, we use our own.
     'icu_use_data_file_flag%': 0,
 
+    # Default build_v8_with_gn to false so that native modules can be built properly
+    'build_v8_with_gn': 'false',
+
     'conditions': [
       ['GENERATOR=="ninja"', {
         'obj_dir': '<(PRODUCT_DIR)/obj',

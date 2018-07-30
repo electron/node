@@ -337,6 +337,17 @@ parser.add_option('--enable-d8',
     dest='enable_d8',
     help=optparse.SUPPRESS_HELP)  # Unsupported, undocumented.
 
+# Electron-specific. Used to assist in calling the gyp build from GN.
+parser.add_option('--config-out-dir',
+    action='store',
+    default='.',
+    dest='config_out_dir',
+    help='output directory to write .gypi files to')
+ parser.add_option('--no-run-gyp',
+    action='store_false',
+    dest='run_gyp',
+    help='suppress running gyp')
+
 parser.add_option('--enable-trace-maps',
     action='store_true',
     dest='trace_maps',
@@ -1156,7 +1167,7 @@ def configure_static(o):
 
 
 def write(filename, data):
-  filename = filename
+  filename = os.path.join(options.config_out_dir, filename)
   print('creating %s' % filename)
   f = open(filename, 'w+')
   f.write(data)
@@ -1572,4 +1583,5 @@ gyp_args += args
 if warn.warned:
   warn('warnings were emitted in the configure phase')
 
-run_gyp(gyp_args)
+if options.run_gyp:
+  run_gyp(gyp_args)
