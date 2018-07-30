@@ -289,6 +289,13 @@ def JS2C(source, target):
         split = split[1:]
       name = '/'.join(split)
 
+    # Electron-specific: when driving the node build from Electron, we generate
+    # config.gypi in a separate directory and pass the absolute path to js2c.
+    # This overrides the absolute path so that the variable names in the
+    # generated C are as if it was in the root node directory.
+    if name.endswith("/config.gypi"):
+      name = "config.gypi"
+
     # if its a gypi file we're going to want it as json
     # later on anyway, so get it out of the way now
     if name.endswith('.gypi'):
