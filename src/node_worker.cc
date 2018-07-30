@@ -4,6 +4,7 @@
 #include "node_internals.h"
 #include "node_buffer.h"
 #include "node_perf.h"
+#include "tracing/trace_event.h"
 #include "util.h"
 #include "util-inl.h"
 #include "async_wrap.h"

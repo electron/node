@@ -26,6 +26,7 @@
 
 #include "v8.h"
 #include "v8-profiler.h"
+#include "tracing/trace_event.h"
 
 using v8::Context;
 using v8::Function;

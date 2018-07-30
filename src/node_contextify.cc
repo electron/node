@@ -25,6 +25,7 @@
 #include "node_contextify.h"
 #include "node_context_data.h"
 #include "node_errors.h"
+#include "tracing/trace_event.h"
 
 namespace node {
 namespace contextify {
