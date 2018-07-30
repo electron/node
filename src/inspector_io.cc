@@ -13,6 +13,8 @@
 #include "util-inl.h"
 #include "zlib.h"
 
+#include "libplatform/libplatform.h"
+
 #include <deque>
 #include <cstring>
 #include <vector>
