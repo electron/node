@@ -320,6 +320,14 @@ def JS2C(source, target):
     if name.endswith(".gypi"):
       lines = re.sub(r'#.*?\n', '', lines)
       lines = re.sub(r'\'', '"', lines)
+
+    # Electron-specific: when driving the node build from Electron, we generate
+    # config.gypi in a separate directory and pass the absolute path to js2c.
+    # This overrides the absolute path so that the variable names in the
+    # generated C are as if it was in the root node directory.
+    if name.endswith("/config.gypi"):
+      name = "config.gypi"
+
     name = name.split('.', 1)[0]
     var = name.replace('-', '_').replace('/', '_')
     key = '%s_key' % var
