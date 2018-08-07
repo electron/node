@@ -30,8 +30,15 @@ static_library("uv") {
   defines = []
 
   cflags_c = [
+    "-Wno-bitwise-op-parentheses",
     "-Wno-implicit-function-declaration",
+    "-Wno-missing-braces",
+    "-Wno-sign-compare",
+    "-Wno-sometimes-uninitialized",
     "-Wno-string-conversion",
+    "-Wno-switch",
+    "-Wno-unused-function",
+    "-Wno-unused-variable",
   ]
 
   libs = []
@@ -55,7 +62,6 @@ static_library("uv") {
 
   if (is_win) {
     defines += [
-      "_WIN32_WINNT=0x0600",
       "_GNU_SOURCE",
     ]
     sources += [

@@ -291,11 +291,15 @@ component("node_lib") {
   ]
   public_configs = [ ":node_lib_config" ]
   include_dirs = [ "src" ]
+  libs = []
   cflags_cc = [
-    "-Wno-unused-variable",
     "-Wno-deprecated-declarations",
     "-Wno-implicit-fallthrough",
+    "-Wno-return-type",
+    "-Wno-sometimes-uninitialized",
+    "-Wno-unused-label",
     "-Wno-unused-private-field",
+    "-Wno-unused-variable",
   ]
   defines = [ "NODE_WANT_INTERNALS=1" ]
 
