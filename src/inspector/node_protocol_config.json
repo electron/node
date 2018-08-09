@@ -1,7 +1,7 @@
 {
     "protocol": {
         "path": "node_protocol.json",
-        "package": "node/inspector/protocol",
+        "package": "src/node/inspector/protocol",
         "output": "node/inspector/protocol",
         "namespace": ["node", "inspector", "protocol"],
         "options": [

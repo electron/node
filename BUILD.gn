@@ -205,12 +205,7 @@ chdir_action("node_js2c") {
     ":generate_config_gypi",
     ":node_js2c_inputs",
   ]
-  cwd = "$target_gen_dir/js2c_inputs"
-  sources = library_files + [ "$target_gen_dir/config.gypi" ]
-  outputs = [
-    "$target_gen_dir/node_javascript.cc",
-  ]
-  script = "tools/js2c.py"
+
   macro_inputs = []
   if (!node_use_dtrace && !node_use_etw) {
     macro_inputs += [ "src/notrace_macros.py" ]
@@ -223,9 +218,20 @@ chdir_action("node_js2c") {
   } else {
     macro_inputs += [ "tools/dcheck_macros.py" ]
   }
-  args = rebase_path(outputs) + library_files +
-         rebase_path([ "$target_gen_dir/config.gypi" ]) +
-         rebase_path(macro_inputs + [ "tools/check_macros.py" ])
+  macro_inputs += [ "tools/check_macros.py" ]
+
+  config_gypi = [ "$target_gen_dir/config.gypi" ]
+
+  inputs = library_files + macro_inputs + config_gypi
+  outputs = [
+    "$target_gen_dir/node_javascript.cc",
+  ]
+
+  cwd = "$target_gen_dir/js2c_inputs"
+  script = "tools/js2c.py"
+  args = rebase_path(outputs)
+  args += library_files
+  args += rebase_path(macro_inputs + config_gypi)
 }
 
 config("node_lib_config") {
@@ -415,7 +421,7 @@ static_library("node_lib") {
       "src/inspector_socket_server.cc",
       "src/inspector_socket_server.h",
     ]
-    sources += rebase_path(_protocol_generated, ".", target_gen_dir)
+    sources += rebase_path(_protocol_generated, ".", "$target_gen_dir/src")
     deps += [
       ":protocol_generated_sources",
       ":v8_inspector_compress_protocol_json",
@@ -450,70 +456,71 @@ static_library("node_lib") {
   }
 }
 
+#### inspector_protocol
+
+template("generate_protocol_json") {
+  copy_target_name = target_name + "_copy"
+  copy(copy_target_name) {
+    sources = invoker.sources
+    outputs = [
+      "$target_gen_dir/{{source_file_part}}",
+    ]
+  }
+  copied_pdl = get_target_outputs(":$copy_target_name")
+  action(target_name) {
+    deps = [
+      ":$copy_target_name",
+    ]
+    sources = copied_pdl
+    outputs = invoker.outputs
+    script = "//v8/third_party/inspector_protocol/ConvertProtocolToJSON.py"
+    args = rebase_path(sources + outputs, root_build_dir)
+  }
+}
+
 import("//v8/gni/v8.gni")
 _inspector_protocol = v8_path_prefix + "/third_party/inspector_protocol"
 import("$_inspector_protocol/inspector_protocol.gni")
 
-node_inspector_path = "src/inspector"
-
-action("prepare_protocol_json") {
+generate_protocol_json("node_protocol_json") {
   sources = [
-    "$node_inspector_path/node_protocol.pdl",
+    "src/inspector/node_protocol.pdl",
   ]
   outputs = [
     "$target_gen_dir/node_protocol.json",
   ]
-  script = "//v8/third_party/inspector_protocol/ConvertProtocolToJSON.py"
-  args = rebase_path(sources + outputs, root_build_dir)
 }
 
-inspector_protocol_generate("protocol_generated_sources") {
-  write_file("$target_gen_dir/node/inspector/protocol/.dummy", "")
-  deps = [
-    ":prepare_protocol_json",
-  ]
-  visibility = [ ":*" ]  # Only targets in this file can depend on this.
-
-  inspector_protocol_dir = _inspector_protocol
-  out_dir = target_gen_dir
-  config_file = "$node_inspector_path/node_protocol_config.json"
-  inputs = [
-    "$target_gen_dir/node_protocol.json",
-    "$node_inspector_path/node_protocol_config.json",
-  ]
-  outputs = _protocol_generated
-}
-
-import("//tools/v8_context_snapshot/v8_context_snapshot.gni")
-executable("node") {
-  deps = [
-    ":node_lib",
-    "//build/config:exe_and_shlib_deps",
-    "//v8:v8_libplatform",
-  ]
+generate_protocol_json("v8_protocol_json") {
   sources = [
-    "src/node_main.cc",
-  ]
-  deps += [
-    #"//tools/v8_context_snapshot:v8_context_snapshot",
-  ]
-}
-
-action("v8_inspector_convert_protocol_to_json") {
-  inputs = [
     "//v8/src/inspector/js_protocol.pdl",
   ]
   outputs = [
     "$target_gen_dir/js_protocol.json",
   ]
-  script = "//v8/third_party/inspector_protocol/ConvertProtocolToJSON.py"
-  args = rebase_path(inputs + outputs)
+}
+
+inspector_protocol_generate("protocol_generated_sources") {
+  # This is to ensure that the output directory exists--the code generator
+  # doesn't create it.
+  write_file("$target_gen_dir/src/node/inspector/protocol/.dummy", "")
+  deps = [
+    ":node_protocol_json",
+  ]
+
+  inspector_protocol_dir = _inspector_protocol
+  out_dir = "$target_gen_dir/src"
+  config_file = "src/inspector/node_protocol_config.json"
+  inputs = [
+    "$target_gen_dir/node_protocol.json",
+  ]
+  outputs = _protocol_generated
 }
 
 action("concatenate_protocols") {
   deps = [
-    ":prepare_protocol_json",
-    ":v8_inspector_convert_protocol_to_json",
+    ":node_protocol_json",
+    ":v8_protocol_json",
   ]
   inputs = [
     "$target_gen_dir/js_protocol.json",
@@ -523,7 +530,7 @@ action("concatenate_protocols") {
     "$target_gen_dir/concatenated_protocol.json",
   ]
   script = "//v8/third_party/inspector_protocol/ConcatenateProtocols.py"
-  args = rebase_path(inputs + outputs)
+  args = rebase_path(inputs + outputs, root_build_dir)
 }
 
 action("v8_inspector_compress_protocol_json") {
@@ -537,8 +544,10 @@ action("v8_inspector_compress_protocol_json") {
     "$target_gen_dir/v8_inspector_protocol_json.h",
   ]
   script = "tools/compress_json.py"
-  args = rebase_path(inputs + outputs)
+  args = rebase_path(inputs + outputs, root_build_dir)
 }
+
+##### node_headers
 
 node_headers_dir = "$root_gen_dir/node_headers/include/node"
 
