@@ -424,6 +424,7 @@ component("node_lib") {
   ]
   if (is_win) {
     sources += [ "src/backtrace_win32.cc" ]
+    libs += [ "psapi.lib" ]
   } else {
     sources += [ "src/backtrace_posix.cc" ]
   }
