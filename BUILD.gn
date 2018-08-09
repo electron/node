@@ -1,4 +1,5 @@
 import("//electron/build/asar.gni")
+import("//v8/gni/v8.gni")
 
 declare_args() {
   # Enable the V8 inspector protocol for use with node.
@@ -28,6 +29,10 @@ declare_args() {
 
   # Build JavaScript in lib/ with DCHECK macros.
   node_debug_lib = false
+
+  node_tag = ""
+  node_v8_options = ""
+  node_release_urlbase = ""
 }
 
 assert(!node_use_dtrace, "node_use_dtrace not supported in GN")
@@ -257,6 +262,11 @@ config("node_lib_config") {
   } else {
     defines += [ "HAVE_OPENSSL=0" ]
   }
+  if (v8_enable_i18n_support) {
+    defines += [ "NODE_HAVE_I18N_SUPPORT=1" ]
+  } else {
+    defines += [ "NODE_HAVE_I18N_SUPPORT=0" ]
+  }
 }
 
 component("node_lib") {
@@ -305,6 +315,20 @@ component("node_lib") {
     ]
   } else {
     defines += [ "__POSIX__" ]
+  }
+
+  if (node_tag != "") {
+    defines += [ "NODE_TAG=\"$node_tag\"" ]
+  }
+  if (node_v8_options != "") {
+    defines += [ "NODE_V8_OPTIONS=\"$node_v8_options\"" ]
+  }
+  if (node_release_urlbase != "") {
+    defines += [ "NODE_RELEASE_URLBASE=\"$node_release_urlbase\"" ]
+  }
+
+  if (v8_enable_i18n_support) {
+    deps += [ "//third_party/icu" ]
   }
 
   sources = [
