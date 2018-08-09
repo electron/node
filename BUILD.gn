@@ -1,11 +1,4 @@
 import("//electron/build/asar.gni")
-_protocol_generated = [
-  "node/inspector/protocol/Forward.h",
-  "node/inspector/protocol/Protocol.cpp",
-  "node/inspector/protocol/Protocol.h",
-  "node/inspector/protocol/NodeTracing.cpp",
-  "node/inspector/protocol/NodeTracing.h",
-]
 
 declare_args() {
   # Enable the V8 inspector protocol for use with node.
@@ -43,12 +36,6 @@ assert(!node_use_perfctr, "node_use_perfctr not supported in GN")
 
 assert(!node_enable_inspector || node_use_openssl,
        "node_enable_inspector requires node_use_openssl")
-
-group("electron_node") {
-  public_deps = [
-    ":node_lib",
-  ]
-}
 
 config("node_internals") {
   defines = [ "NODE_WANT_INTERNALS=1" ]
@@ -431,10 +418,6 @@ component("node_lib") {
 
   if (node_enable_inspector) {
     sources += [
-      "src/inspector/node_string.cc",
-      "src/inspector/node_string.h",
-      "src/inspector/tracing_agent.cc",
-      "src/inspector/tracing_agent.h",
       "src/inspector_agent.cc",
       "src/inspector_agent.h",
       "src/inspector_io.cc",
@@ -445,12 +428,9 @@ component("node_lib") {
       "src/inspector_socket_server.cc",
       "src/inspector_socket_server.h",
     ]
-    sources += rebase_path(_protocol_generated, ".", "$target_gen_dir/src")
     deps += [
-      ":protocol_generated_sources",
-      ":v8_inspector_compress_protocol_json",
+      "src/inspector",
     ]
-    include_dirs += [ "$target_gen_dir" ]
   }
 
   if (node_use_openssl) {
@@ -478,97 +458,6 @@ component("node_lib") {
   } else {
     defines += [ "NODE_USE_V8_PLATFORM=0" ]
   }
-}
-
-#### inspector_protocol
-
-template("generate_protocol_json") {
-  copy_target_name = target_name + "_copy"
-  copy(copy_target_name) {
-    sources = invoker.sources
-    outputs = [
-      "$target_gen_dir/{{source_file_part}}",
-    ]
-  }
-  copied_pdl = get_target_outputs(":$copy_target_name")
-  action(target_name) {
-    deps = [
-      ":$copy_target_name",
-    ]
-    sources = copied_pdl
-    outputs = invoker.outputs
-    script = "//v8/third_party/inspector_protocol/ConvertProtocolToJSON.py"
-    args = rebase_path(sources + outputs, root_build_dir)
-  }
-}
-
-import("//v8/gni/v8.gni")
-_inspector_protocol = v8_path_prefix + "/third_party/inspector_protocol"
-import("$_inspector_protocol/inspector_protocol.gni")
-
-generate_protocol_json("node_protocol_json") {
-  sources = [
-    "src/inspector/node_protocol.pdl",
-  ]
-  outputs = [
-    "$target_gen_dir/node_protocol.json",
-  ]
-}
-
-generate_protocol_json("v8_protocol_json") {
-  sources = [
-    "//v8/src/inspector/js_protocol.pdl",
-  ]
-  outputs = [
-    "$target_gen_dir/js_protocol.json",
-  ]
-}
-
-inspector_protocol_generate("protocol_generated_sources") {
-  # This is to ensure that the output directory exists--the code generator
-  # doesn't create it.
-  write_file("$target_gen_dir/src/node/inspector/protocol/.dummy", "")
-  deps = [
-    ":node_protocol_json",
-  ]
-
-  inspector_protocol_dir = _inspector_protocol
-  out_dir = "$target_gen_dir/src"
-  config_file = "src/inspector/node_protocol_config.json"
-  inputs = [
-    "$target_gen_dir/node_protocol.json",
-  ]
-  outputs = _protocol_generated
-}
-
-action("concatenate_protocols") {
-  deps = [
-    ":node_protocol_json",
-    ":v8_protocol_json",
-  ]
-  inputs = [
-    "$target_gen_dir/js_protocol.json",
-    "$target_gen_dir/node_protocol.json",
-  ]
-  outputs = [
-    "$target_gen_dir/concatenated_protocol.json",
-  ]
-  script = "//v8/third_party/inspector_protocol/ConcatenateProtocols.py"
-  args = rebase_path(inputs + outputs, root_build_dir)
-}
-
-action("v8_inspector_compress_protocol_json") {
-  deps = [
-    ":concatenate_protocols",
-  ]
-  inputs = [
-    "$target_gen_dir/concatenated_protocol.json",
-  ]
-  outputs = [
-    "$target_gen_dir/v8_inspector_protocol_json.h",
-  ]
-  script = "tools/compress_json.py"
-  args = rebase_path(inputs + outputs, root_build_dir)
 }
 
 ##### node_headers
