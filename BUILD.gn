@@ -272,13 +272,14 @@ config("node_lib_config") {
   }
 }
 
-static_library("node_lib") {
+component("node_lib") {
   deps = [
     ":node_js2c",
     "deps/cares",
     "deps/http_parser",
     "deps/nghttp2",
     "//third_party/zlib",
+    "//v8:v8_libplatform",
   ]
   public_deps = [
     "deps/uv",
