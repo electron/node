@@ -280,21 +280,33 @@ component("node_lib") {
     "-Wno-implicit-fallthrough",
     "-Wno-unused-private-field",
   ]
-  defines = [
-    "NODE_ARCH=\"$target_cpu\"",
-    "NODE_PLATFORM=\"$target_os\"",
-    "NODE_WANT_INTERNALS=1",
-  ]
+  defines = [ "NODE_WANT_INTERNALS=1" ]
+
+  if (target_cpu == "x86") {
+    node_arch = "ia32"
+  } else {
+    node_arch = target_cpu
+  }
+  defines += [ "NODE_ARCH=\"$node_arch\"" ]
+
+  if (target_os == "win") {
+    node_platform = "win32"
+  } else if (target_os == "mac") {
+    node_platform = "darwin"
+  } else {
+    node_platform = target_os
+  }
+  defines += [ "NODE_PLATFORM=\"$node_platform\"" ]
+
   if (is_win) {
-    defines -= [ "NODE_PLATFORM=\"$target_os\"" ]
     defines += [
-      "NODE_PLATFORM=\"win32\"",
       "NOMINMAX",
       "_UNICODE=1",
     ]
   } else {
     defines += [ "__POSIX__" ]
   }
+
   sources = [
     "$target_gen_dir/node_javascript.cc",
     "src/aliased_buffer.h",
