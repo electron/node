@@ -30,8 +30,15 @@ declare_args() {
   # Build JavaScript in lib/ with DCHECK macros.
   node_debug_lib = false
 
+  # Custom build tag.
   node_tag = ""
+
+  # V8 options to pass, see `node --v8-options` for examples
   node_v8_options = ""
+
+  # Provide a custom URL prefix for the `process.release` properties
+  # `sourceUrl` and `headersUrl`. When compiling a release build, this will
+  # default to https://nodejs.org/download/release/')
   node_release_urlbase = ""
 }
 
@@ -451,6 +458,10 @@ component("node_lib") {
     libs += [ "psapi.lib" ]
   } else {
     sources += [ "src/backtrace_posix.cc" ]
+  }
+
+  if (is_mac) {
+    libs += [ "CoreFoundation.framework" ]
   }
 
   if (node_enable_inspector) {
