@@ -1,5 +1,4 @@
 // Copyright Joyent, Inc. and other Node contributors.
-//
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
 // "Software"), to deal in the Software without restriction, including
@@ -432,8 +431,10 @@ template <typename T>
 struct MallocedBuffer {
   T* data;
   size_t size;
+  v8::ArrayBuffer::Allocator* allocator;
 
   T* release() {
+    allocator = nullptr;
     T* ret = data;
     data = nullptr;
     return ret;
@@ -441,18 +442,28 @@ struct MallocedBuffer {
 
   inline bool is_empty() const { return data == nullptr; }
 
-  MallocedBuffer() : data(nullptr) {}
-  explicit MallocedBuffer(size_t size) : data(Malloc<T>(size)), size(size) {}
-  MallocedBuffer(char* data, size_t size) : data(data), size(size) {}
-  MallocedBuffer(MallocedBuffer&& other) : data(other.data), size(other.size) {
+  MallocedBuffer() : data(nullptr), allocator(nullptr) {}
+  MallocedBuffer(size_t size, v8::ArrayBuffer::Allocator* allocator)
+      : size(size), allocator(allocator) {
+    data = static_cast<T*>(allocator->AllocateUninitialized(size));
+  }
+  MallocedBuffer(char *data, size_t size, v8::ArrayBuffer::Allocator *allocator)
+      : data(data), size(size), allocator(allocator) {}
+  MallocedBuffer(MallocedBuffer&& other)
+      : data(other.data), size(other.size), allocator(other.allocator) {
     other.data = nullptr;
+    other.allocator = nullptr;
   }
   MallocedBuffer& operator=(MallocedBuffer&& other) {
     this->~MallocedBuffer();
     return *new(this) MallocedBuffer(std::move(other));
   }
   ~MallocedBuffer() {
-    free(data);
+    if (allocator) {
+      allocator->Free(data, size);
+    } else {
+      free(data);
+    }
   }
   MallocedBuffer(const MallocedBuffer&) = delete;
   MallocedBuffer& operator=(const MallocedBuffer&) = delete;
