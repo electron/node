@@ -355,7 +355,13 @@ void StreamResource::ClearError() {
 
 
 uv_buf_t StreamListener::OnStreamAlloc(size_t suggested_size) {
-  return uv_buf_init(Malloc(suggested_size), suggested_size);
+  CHECK_NE(stream_, nullptr);
+  StreamBase* stream = static_cast<StreamBase*>(stream_);
+  Environment* env = stream->stream_env();
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  return uv_buf_init(
+      static_cast<char*>(allocator->AllocateUninitialized(suggested_size)),
+      suggested_size);
 }
 
 
@@ -363,18 +369,19 @@ void EmitToJSStreamListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf) {
   CHECK_NOT_NULL(stream_);
   StreamBase* stream = static_cast<StreamBase*>(stream_);
   Environment* env = stream->stream_env();
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
   if (nread <= 0)  {
-    free(buf.base);
+    allocator->Free(buf.base, buf.len);
     if (nread < 0)
       stream->CallJSOnreadMethod(nread, Local<Object>());
     return;
   }
 
   CHECK_LE(static_cast<size_t>(nread), buf.len);
-  char* base = Realloc(buf.base, nread);
+  char* base = static_cast<char*>(allocator->Realloc(buf.base, nread));
 
   Local<Object> obj = Buffer::New(env, base, nread).ToLocalChecked();
   stream->CallJSOnreadMethod(nread, obj);
