@@ -31,15 +31,15 @@ const expected = Buffer.from('xyz\n');
 
 function test(bufferAsync, bufferSync, expected) {
   fs.read(fd,
-          bufferAsync,
-          0,
-          expected.length,
-          0,
-          common.mustCall((err, bytesRead) => {
-            assert.ifError(err);
-            assert.strictEqual(bytesRead, expected.length);
-            assert.deepStrictEqual(bufferAsync, expected);
-          }));
+    bufferAsync,
+    0,
+    expected.length,
+    0,
+    common.mustCall((err, bytesRead) => {
+      assert.ifError(err);
+      assert.strictEqual(bytesRead, expected.length);
+      assert.deepStrictEqual(bufferAsync, expected);
+    }));
 
   const r = fs.readSync(fd, bufferSync, 0, expected.length, 0);
   assert.deepStrictEqual(bufferSync, expected);
@@ -47,9 +47,24 @@ function test(bufferAsync, bufferSync, expected) {
 }
 
 test(Buffer.allocUnsafe(expected.length),
-     Buffer.allocUnsafe(expected.length),
-     expected);
+  Buffer.allocUnsafe(expected.length),
+  expected);
 
 test(new Uint8Array(expected.length),
-     new Uint8Array(expected.length),
-     Uint8Array.from(expected));
+  new Uint8Array(expected.length),
+  Uint8Array.from(expected));
+
+{
+  // Reading beyond file length (3 in this case) should return no data.
+  // This is a test for a bug where reads > uint32 would return data
+  // from the current position in the file.
+  const fd = fs.openSync(filepath, 'r');
+  const pos = 0xffffffff + 1; // max-uint32 + 1
+  const nRead = fs.readSync(fd, Buffer.alloc(1), 0, 1, pos);
+  assert.strictEqual(nRead, 0);
+
+  fs.read(fd, Buffer.alloc(1), 0, 1, pos, common.mustCall((err, nRead) => {
+    assert.ifError(err);
+    assert.strictEqual(nRead, 0);
+  }));
+}
