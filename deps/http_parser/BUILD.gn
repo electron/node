@@ -1,0 +1,13 @@
+config("http_parser_config") {
+  defines = [ "HTTP_PARSER_STRICT=0" ]
+  include_dirs = [ "." ]
+}
+
+static_library("http_parser") {
+  include_dirs = [ "." ]
+  public_configs = [ ":http_parser_config" ]
+  cflags_c = [ "-Wno-string-conversion" ]
+  sources = [
+    "http_parser.c",
+  ]
+}

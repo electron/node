@@ -1,0 +1,159 @@
+import("//v8/gni/v8.gni")
+
+_inspector_protocol = v8_path_prefix + "/third_party/inspector_protocol"
+import("$_inspector_protocol/inspector_protocol.gni")
+
+_protocol_generated = [
+  "protocol/Forward.h",
+  "protocol/Protocol.cpp",
+  "protocol/Protocol.h",
+  "protocol/NodeTracing.cpp",
+  "protocol/NodeTracing.h",
+]
+
+# These are from node_protocol_config.json
+# These convoluted path hacks are to work around the fact that node.js is very
+# confused about what paths are in its includes, without changing node at all.
+# Hopefully, keying everything in this file off the paths that are in
+# node_protocol_config.json will mean that the paths stay in sync.
+inspector_protocol_package = "src/node/inspector/protocol"
+inspector_protocol_output = "node/inspector/protocol"
+
+config("inspector_config") {
+  include_dirs = [
+    "$target_gen_dir",
+    "$target_gen_dir/src",
+  ]
+
+  defines = [ "HAVE_INSPECTOR=1" ]
+}
+
+source_set("inspector") {
+  sources = [
+    "main_thread_interface.cc",
+    "main_thread_interface.h",
+    "node_string.cc",
+    "node_string.h",
+    "tracing_agent.cc",
+    "tracing_agent.h",
+  ]
+  sources += rebase_path(_protocol_generated,
+                         ".",
+                         "$target_gen_dir/$inspector_protocol_package/..")
+  include_dirs = [
+    "//v8/include",
+    "..",
+  ]
+  deps = [
+    ":protocol_generated_sources",
+    ":v8_inspector_compress_protocol_json",
+    "../../deps/uv",
+    "//third_party/icu:icuuc",
+  ]
+  defines = [ "NODE_WANT_INTERNALS=1" ]
+  if (is_component_build) {
+    defines += [
+      "BUILDING_V8_SHARED",
+      "BUILDING_V8_PLATFORM_SHARED",
+      "BUILDING_V8_BASE_SHARED",
+    ]
+  }
+  public_configs = [ ":inspector_config" ]
+}
+
+inspector_protocol_generate("protocol_generated_sources") {
+  # This is to ensure that the output directory exists--the code generator
+  # doesn't create it.
+  write_file("$target_gen_dir/$inspector_protocol_package/.dummy", "")
+  deps = [
+    ":node_protocol_json",
+    ":node_protocol_config",
+  ]
+
+  inspector_protocol_dir = _inspector_protocol
+  out_dir = "$target_gen_dir/src"
+  config_file = "$target_gen_dir/node_protocol_config.json"
+  inputs = [
+    "$target_gen_dir/node_protocol.json",
+  ]
+
+  outputs =
+      rebase_path(_protocol_generated, ".", "$inspector_protocol_output/..")
+}
+
+template("generate_protocol_json") {
+  copy_target_name = target_name + "_copy"
+  copy(copy_target_name) {
+    sources = invoker.sources
+    outputs = [
+      "$target_gen_dir/{{source_file_part}}",
+    ]
+  }
+  copied_pdl = get_target_outputs(":$copy_target_name")
+  action(target_name) {
+    deps = [
+      ":$copy_target_name",
+    ]
+    sources = copied_pdl
+    outputs = invoker.outputs
+    script = "//v8/third_party/inspector_protocol/convert_protocol_to_json.py"
+    args = rebase_path(sources + outputs, root_build_dir)
+  }
+}
+
+copy("node_protocol_config") {
+  sources = [
+    "node_protocol_config.json"
+  ]
+  outputs = [
+    "$target_gen_dir/{{source_file_part}}"
+  ]
+}
+
+generate_protocol_json("node_protocol_json") {
+  sources = [
+    "node_protocol.pdl",
+  ]
+  outputs = [
+    "$target_gen_dir/node_protocol.json",
+  ]
+}
+
+generate_protocol_json("v8_protocol_json") {
+  sources = [
+    "//v8/src/inspector/js_protocol.pdl",
+  ]
+  outputs = [
+    "$target_gen_dir/js_protocol.json",
+  ]
+}
+
+action("concatenate_protocols") {
+  deps = [
+    ":node_protocol_json",
+    ":v8_protocol_json",
+  ]
+  inputs = [
+    "$target_gen_dir/js_protocol.json",
+    "$target_gen_dir/node_protocol.json",
+  ]
+  outputs = [
+    "$target_gen_dir/concatenated_protocol.json",
+  ]
+  script = "//v8/third_party/inspector_protocol/concatenate_protocols.py"
+  args = rebase_path(inputs + outputs, root_build_dir)
+}
+
+action("v8_inspector_compress_protocol_json") {
+  deps = [
+    ":concatenate_protocols",
+  ]
+  inputs = [
+    "$target_gen_dir/concatenated_protocol.json",
+  ]
+  outputs = [
+    "$target_gen_dir/v8_inspector_protocol_json.h",
+  ]
+  script = "../../tools/compress_json.py"
+  args = rebase_path(inputs + outputs, root_build_dir)
+}

@@ -1,0 +1,657 @@
+import("//electron/build/asar.gni")
+import("//v8/gni/v8.gni")
+
+declare_args() {
+  # Enable the V8 inspector protocol for use with node.
+  node_enable_inspector = true
+
+  # Build node with SSL support.
+  # The variable is called "openssl" for parity with node's GYP build.
+  node_use_openssl = true
+
+  # Use the specified path to system CA (PEM format) in addition to
+  # the BoringSSL supplied CA store or compiled-in Mozilla CA copy.
+  node_openssl_system_ca_path = ""
+
+  # Initialize v8 platform during node.js startup.
+  # NB. this must be turned off in Electron, because Electron initializes the
+  # v8 platform itself.
+  node_use_v8_platform = false
+
+  # Build with DTrace support.
+  node_use_dtrace = false
+
+  # Build with ETW support.
+  node_use_etw = false
+
+  # Build with performance counters.
+  node_use_perfctr = false
+
+  # Build JavaScript in lib/ with DCHECK macros.
+  node_debug_lib = false
+
+  # Custom build tag.
+  node_tag = ""
+
+  # V8 options to pass, see `node --v8-options` for examples
+  node_v8_options = ""
+
+  # Provide a custom URL prefix for the `process.release` properties
+  # `sourceUrl` and `headersUrl`. When compiling a release build, this will
+  # default to https://nodejs.org/download/release/')
+  node_release_urlbase = ""
+}
+
+assert(!node_use_dtrace, "node_use_dtrace not supported in GN")
+assert(!node_use_etw, "node_use_etw not supported in GN")
+assert(!node_use_perfctr, "node_use_perfctr not supported in GN")
+
+assert(!node_enable_inspector || node_use_openssl,
+       "node_enable_inspector requires node_use_openssl")
+
+config("node_internals") {
+  defines = [ "NODE_WANT_INTERNALS=1" ]
+}
+
+library_files = [
+  "lib/internal/per_context.js",
+  "lib/internal/bootstrap/cache.js",
+  "lib/internal/bootstrap/loaders.js",
+  "lib/internal/bootstrap/node.js",
+  "lib/async_hooks.js",
+  "lib/assert.js",
+  "lib/buffer.js",
+  "lib/child_process.js",
+  "lib/console.js",
+  "lib/constants.js",
+  "lib/crypto.js",
+  "lib/cluster.js",
+  "lib/dgram.js",
+  "lib/dns.js",
+  "lib/domain.js",
+  "lib/events.js",
+  "lib/fs.js",
+  "lib/http.js",
+  "lib/http2.js",
+  "lib/_http_agent.js",
+  "lib/_http_client.js",
+  "lib/_http_common.js",
+  "lib/_http_incoming.js",
+  "lib/_http_outgoing.js",
+  "lib/_http_server.js",
+  "lib/https.js",
+  "lib/inspector.js",
+  "lib/module.js",
+  "lib/net.js",
+  "lib/os.js",
+  "lib/path.js",
+  "lib/perf_hooks.js",
+  "lib/process.js",
+  "lib/punycode.js",
+  "lib/querystring.js",
+  "lib/readline.js",
+  "lib/repl.js",
+  "lib/stream.js",
+  "lib/_stream_readable.js",
+  "lib/_stream_writable.js",
+  "lib/_stream_duplex.js",
+  "lib/_stream_transform.js",
+  "lib/_stream_passthrough.js",
+  "lib/_stream_wrap.js",
+  "lib/string_decoder.js",
+  "lib/sys.js",
+  "lib/timers.js",
+  "lib/tls.js",
+  "lib/_tls_common.js",
+  "lib/_tls_wrap.js",
+  "lib/trace_events.js",
+  "lib/tty.js",
+  "lib/url.js",
+  "lib/util.js",
+  "lib/v8.js",
+  "lib/vm.js",
+  "lib/worker_threads.js",
+  "lib/zlib.js",
+  "lib/internal/assert.js",
+  "lib/internal/async_hooks.js",
+  "lib/internal/buffer.js",
+  "lib/internal/cli_table.js",
+  "lib/internal/child_process.js",
+  "lib/internal/cluster/child.js",
+  "lib/internal/cluster/master.js",
+  "lib/internal/cluster/round_robin_handle.js",
+  "lib/internal/cluster/shared_handle.js",
+  "lib/internal/cluster/utils.js",
+  "lib/internal/cluster/worker.js",
+  "lib/internal/crypto/certificate.js",
+  "lib/internal/crypto/cipher.js",
+  "lib/internal/crypto/diffiehellman.js",
+  "lib/internal/crypto/hash.js",
+  "lib/internal/crypto/pbkdf2.js",
+  "lib/internal/crypto/random.js",
+  "lib/internal/crypto/scrypt.js",
+  "lib/internal/crypto/sig.js",
+  "lib/internal/crypto/util.js",
+  "lib/internal/constants.js",
+  "lib/internal/dgram.js",
+  "lib/internal/dns/promises.js",
+  "lib/internal/dns/utils.js",
+  "lib/internal/domexception.js",
+  "lib/internal/encoding.js",
+  "lib/internal/errors.js",
+  "lib/internal/error-serdes.js",
+  "lib/internal/fixed_queue.js",
+  "lib/internal/freelist.js",
+  "lib/internal/fs/promises.js",
+  "lib/internal/fs/read_file_context.js",
+  "lib/internal/fs/streams.js",
+  "lib/internal/fs/sync_write_stream.js",
+  "lib/internal/fs/utils.js",
+  "lib/internal/fs/watchers.js",
+  "lib/internal/http.js",
+  "lib/internal/inspector_async_hook.js",
+  "lib/internal/linkedlist.js",
+  "lib/internal/modules/cjs/helpers.js",
+  "lib/internal/modules/cjs/loader.js",
+  "lib/internal/modules/esm/loader.js",
+  "lib/internal/modules/esm/create_dynamic_module.js",
+  "lib/internal/modules/esm/default_resolve.js",
+  "lib/internal/modules/esm/module_job.js",
+  "lib/internal/modules/esm/module_map.js",
+  "lib/internal/modules/esm/translators.js",
+  "lib/internal/safe_globals.js",
+  "lib/internal/net.js",
+  "lib/internal/print_help.js",
+  "lib/internal/process/esm_loader.js",
+  "lib/internal/process/main_thread_only.js",
+  "lib/internal/process/next_tick.js",
+  "lib/internal/process/per_thread.js",
+  "lib/internal/process/promises.js",
+  "lib/internal/process/stdio.js",
+  "lib/internal/process/warning.js",
+  "lib/internal/process/worker_thread_only.js",
+  "lib/internal/querystring.js",
+  "lib/internal/process/write-coverage.js",
+  "lib/internal/process/coverage.js",
+  "lib/internal/readline.js",
+  "lib/internal/repl.js",
+  "lib/internal/repl/await.js",
+  "lib/internal/repl/recoverable.js",
+  "lib/internal/socket_list.js",
+  "lib/internal/test/binding.js",
+  "lib/internal/test/heap.js",
+  "lib/internal/test/unicode.js",
+  "lib/internal/timers.js",
+  "lib/internal/tls.js",
+  "lib/internal/trace_events_async_hooks.js",
+  "lib/internal/tty.js",
+  "lib/internal/url.js",
+  "lib/internal/util.js",
+  "lib/internal/util/comparisons.js",
+  "lib/internal/util/inspector.js",
+  "lib/internal/util/types.js",
+  "lib/internal/http2/core.js",
+  "lib/internal/http2/compat.js",
+  "lib/internal/http2/util.js",
+  "lib/internal/v8_prof_polyfill.js",
+  "lib/internal/v8_prof_processor.js",
+  "lib/internal/validators.js",
+  "lib/internal/stream_base_commons.js",
+  "lib/internal/vm/source_text_module.js",
+  "lib/internal/worker.js",
+  "lib/internal/streams/lazy_transform.js",
+  "lib/internal/streams/async_iterator.js",
+  "lib/internal/streams/buffer_list.js",
+  "lib/internal/streams/duplexpair.js",
+  "lib/internal/streams/legacy.js",
+  "lib/internal/streams/destroy.js",
+  "lib/internal/streams/state.js",
+  "lib/internal/streams/pipeline.js",
+  "lib/internal/streams/end-of-stream.js",
+  "lib/internal/wrap_js_stream.js",
+  "deps/v8/tools/splaytree.js",
+  "deps/v8/tools/codemap.js",
+  "deps/v8/tools/consarray.js",
+  "deps/v8/tools/csvparser.js",
+  "deps/v8/tools/profile.js",
+  "deps/v8/tools/profile_view.js",
+  "deps/v8/tools/logreader.js",
+  "deps/v8/tools/arguments.js",
+  "deps/v8/tools/tickprocessor.js",
+  "deps/v8/tools/SourceMap.js",
+  "deps/v8/tools/tickprocessor-driver.js",
+  "deps/node-inspect/lib/_inspect.js",
+  "deps/node-inspect/lib/internal/inspect_client.js",
+  "deps/node-inspect/lib/internal/inspect_repl.js",
+  "deps/acorn/dist/acorn.js",
+  "deps/acorn/dist/walk.js",
+]
+
+copy("node_js2c_inputs") {
+  sources = library_files
+  outputs = [
+    "$target_gen_dir/js2c_inputs/{{source_target_relative}}",
+  ]
+}
+
+action("generate_config_gypi") {
+  outputs = [
+    "$target_gen_dir/config.gypi",
+  ]
+  script = "tools/generate_config_gypi.py"
+  args = rebase_path(outputs, root_build_dir)
+}
+
+chdir_action("node_js2c") {
+  deps = [
+    ":generate_config_gypi",
+    ":node_js2c_inputs",
+  ]
+
+  macro_inputs = []
+  if (!node_use_dtrace && !node_use_etw) {
+    macro_inputs += [ "src/notrace_macros.py" ]
+  }
+  if (!node_use_perfctr) {
+    macro_inputs += [ "src/noperfctr_macros.py" ]
+  }
+  if (node_debug_lib) {
+    macro_inputs += [ "tools/nodcheck_macros.py" ]
+  } else {
+    macro_inputs += [ "tools/dcheck_macros.py" ]
+  }
+  macro_inputs += [ "tools/check_macros.py" ]
+
+  config_gypi = [ "$target_gen_dir/config.gypi" ]
+
+  inputs = library_files + macro_inputs + config_gypi
+  outputs = [
+    "$target_gen_dir/node_javascript.cc",
+  ]
+
+  cwd = "$target_gen_dir/js2c_inputs"
+  script = "tools/js2c.py"
+  args = rebase_path(outputs)
+  args += library_files
+  args += rebase_path(macro_inputs + config_gypi)
+}
+
+config("node_lib_config") {
+  include_dirs = [ "src" ]
+  defines = []
+  if (node_enable_inspector) {
+    defines += [ "HAVE_INSPECTOR=1" ]
+  } else {
+    defines += [ "HAVE_INSPECTOR=0" ]
+  }
+  if (node_use_openssl) {
+    defines += [ "HAVE_OPENSSL=1" ]
+  } else {
+    defines += [ "HAVE_OPENSSL=0" ]
+  }
+  if (v8_enable_i18n_support) {
+    defines += [ "NODE_HAVE_I18N_SUPPORT=1" ]
+  } else {
+    defines += [ "NODE_HAVE_I18N_SUPPORT=0" ]
+  }
+}
+
+component("node_lib") {
+  deps = [
+    ":node_js2c",
+    "deps/cares",
+    "deps/http_parser",
+    "deps/nghttp2",
+    "//third_party/zlib",
+    "//v8:v8_libplatform",
+  ]
+  public_deps = [
+    "deps/uv",
+    "//v8",
+  ]
+  public_configs = [ ":node_lib_config" ]
+  include_dirs = [ "src" ]
+  libs = []
+  cflags_cc = [
+    "-Wno-deprecated-declarations",
+    "-Wno-implicit-fallthrough",
+    "-Wno-return-type",
+    "-Wno-sometimes-uninitialized",
+    "-Wno-unused-label",
+    "-Wno-unused-private-field",
+    "-Wno-unused-variable",
+  ]
+  defines = [
+    "NODE_WANT_INTERNALS=1",
+    "NODE_WITHOUT_NODE_OPTIONS",
+  ]
+
+  if (is_component_build) {
+    defines += [
+      "BUILDING_V8_SHARED",
+      "BUILDING_V8_PLATFORM_SHARED",
+      "BUILDING_V8_BASE_SHARED",
+      "NODE_SHARED_MODE",
+    ]
+  }
+
+  if (target_cpu == "x86") {
+    node_arch = "ia32"
+  } else {
+    node_arch = target_cpu
+  }
+  defines += [ "NODE_ARCH=\"$node_arch\"" ]
+
+  if (target_os == "win") {
+    node_platform = "win32"
+  } else if (target_os == "mac") {
+    node_platform = "darwin"
+  } else {
+    node_platform = target_os
+  }
+  defines += [ "NODE_PLATFORM=\"$node_platform\"" ]
+
+  if (is_win) {
+    defines += [
+      "NOMINMAX",
+      "_UNICODE=1",
+    ]
+  } else {
+    defines += [ "__POSIX__" ]
+  }
+
+  if (node_tag != "") {
+    defines += [ "NODE_TAG=\"$node_tag\"" ]
+  }
+  if (node_v8_options != "") {
+    defines += [ "NODE_V8_OPTIONS=\"$node_v8_options\"" ]
+  }
+  if (node_release_urlbase != "") {
+    defines += [ "NODE_RELEASE_URLBASE=\"$node_release_urlbase\"" ]
+  }
+
+  if (v8_enable_i18n_support) {
+    deps += [ "//third_party/icu" ]
+  }
+
+  sources = [
+    "$target_gen_dir/node_javascript.cc",
+    "src/aliased_buffer.h",
+    "src/async_wrap-inl.h",
+    "src/async_wrap.cc",
+    "src/async_wrap.h",
+    "src/base_object-inl.h",
+    "src/base_object.h",
+    "src/bootstrapper.cc",
+    "src/callback_scope.cc",
+    "src/cares_wrap.cc",
+    "src/connect_wrap.cc",
+    "src/connect_wrap.h",
+    "src/connection_wrap.cc",
+    "src/connection_wrap.h",
+    "src/debug_utils.cc",
+    "src/debug_utils.h",
+    "src/env-inl.h",
+    "src/env.cc",
+    "src/env.h",
+    "src/exceptions.cc",
+    "src/fs_event_wrap.cc",
+    "src/handle_wrap.cc",
+    "src/handle_wrap.h",
+    "src/heap_utils.cc",
+    "src/js_stream.cc",
+    "src/js_stream.h",
+    "src/memory_tracker-inl.h",
+    "src/memory_tracker.h",
+    "src/module_wrap.cc",
+    "src/module_wrap.h",
+    "src/node.cc",
+    "src/node.h",
+    "src/node_api.cc",
+    "src/node_api.h",
+    "src/node_api_types.h",
+    "src/node_buffer.cc",
+    "src/node_buffer.h",
+    "src/node_code_cache.h",
+    "src/node_code_cache_stub.cc",
+    "src/node_config.cc",
+    "src/node_constants.cc",
+    "src/node_constants.h",
+    "src/node_contextify.cc",
+    "src/node_contextify.h",
+    "src/node_domain.cc",
+    "src/node_encoding.cc",
+    "src/node_errors.h",
+    "src/node_file.cc",
+    "src/node_file.h",
+    "src/node_http2.cc",
+    "src/node_http2.h",
+    "src/node_http2_state.h",
+    "src/node_http_parser.cc",
+    "src/node_i18n.cc",
+    "src/node_i18n.h",
+    "src/node_internals.h",
+    "src/node_javascript.h",
+    "src/node_messaging.cc",
+    "src/node_messaging.h",
+    "src/node_mutex.h",
+    "src/node_options-inl.h",
+    "src/node_options.cc",
+    "src/node_options.h",
+    "src/node_os.cc",
+    "src/node_perf.cc",
+    "src/node_perf.h",
+    "src/node_perf_common.h",
+    "src/node_persistent.h",
+    "src/node_platform.cc",
+    "src/node_platform.h",
+    "src/node_postmortem_metadata.cc",
+    "src/node_process.cc",
+    "src/node_revert.h",
+    "src/node_root_certs.h",
+    "src/node_serdes.cc",
+    "src/node_stat_watcher.cc",
+    "src/node_trace_events.cc",
+    "src/node_types.cc",
+    "src/node_url.cc",
+    "src/node_util.cc",
+    "src/node_v8.cc",
+    "src/node_version.h",
+    "src/node_watchdog.cc",
+    "src/node_watchdog.h",
+    "src/node_worker.cc",
+    "src/node_worker.h",
+    "src/node_wrap.h",
+    "src/node_zlib.cc",
+    "src/pipe_wrap.cc",
+    "src/pipe_wrap.h",
+    "src/process_wrap.cc",
+    "src/req_wrap-inl.h",
+    "src/req_wrap.h",
+    "src/sharedarraybuffer_metadata.cc",
+    "src/sharedarraybuffer_metadata.h",
+    "src/signal_wrap.cc",
+    "src/spawn_sync.cc",
+    "src/stream_base-inl.h",
+    "src/stream_base.cc",
+    "src/stream_base.h",
+    "src/stream_pipe.cc",
+    "src/stream_pipe.h",
+    "src/stream_wrap.cc",
+    "src/stream_wrap.h",
+    "src/string_bytes.cc",
+    "src/string_bytes.h",
+    "src/string_decoder-inl.h",
+    "src/string_decoder.cc",
+    "src/string_decoder.h",
+    "src/tcp_wrap.cc",
+    "src/tcp_wrap.h",
+    "src/timer_wrap.cc",
+    "src/tracing/agent.cc",
+    "src/tracing/agent.h",
+    "src/tracing/node_trace_buffer.cc",
+    "src/tracing/node_trace_buffer.h",
+    "src/tracing/node_trace_writer.cc",
+    "src/tracing/node_trace_writer.h",
+    "src/tracing/trace_event.cc",
+    "src/tracing/trace_event.h",
+    "src/tracing/traced_value.cc",
+    "src/tracing/traced_value.h",
+    "src/tty_wrap.cc",
+    "src/tty_wrap.h",
+    "src/udp_wrap.cc",
+    "src/udp_wrap.h",
+    "src/util-inl.h",
+    "src/util.cc",
+    "src/util.h",
+    "src/uv.cc",
+  ]
+
+  if (is_win) {
+    libs += [ "psapi.lib" ]
+  }
+  if (is_mac) {
+    libs += [ "CoreFoundation.framework" ]
+  }
+
+  if (node_enable_inspector) {
+    sources += [
+      "src/inspector_agent.cc",
+      "src/inspector_agent.h",
+      "src/inspector_io.cc",
+      "src/inspector_io.h",
+      "src/inspector_js_api.cc",
+      "src/inspector_socket.cc",
+      "src/inspector_socket.h",
+      "src/inspector_socket_server.cc",
+      "src/inspector_socket_server.h",
+    ]
+    deps += [
+      "src/inspector",
+    ]
+  }
+
+  if (node_use_openssl) {
+    deps += [ "//third_party/boringssl" ]
+    sources += [
+      "src/node_crypto.cc",
+      "src/node_crypto.h",
+      "src/node_crypto_bio.cc",
+      "src/node_crypto_bio.h",
+      "src/node_crypto_clienthello.cc",
+      "src/node_crypto_clienthello.h",
+      "src/tls_wrap.cc",
+      "src/tls_wrap.h",
+    ]
+    defines += [
+      "NODE_OPENSSL_SYSTEM_CERT_PATH=\"$node_openssl_system_ca_path\"",
+      "EVP_CTRL_AEAD_SET_IVLEN=EVP_CTRL_GCM_SET_IVLEN",
+      "EVP_CTRL_CCM_SET_TAG=EVP_CTRL_GCM_SET_TAG",
+      "EVP_CTRL_AEAD_GET_TAG=EVP_CTRL_GCM_GET_TAG",
+    ]
+    cflags_cc += [ "-Wno-sign-compare" ]
+  }
+  if (node_use_v8_platform) {
+    defines += [ "NODE_USE_V8_PLATFORM=1" ]
+  } else {
+    defines += [ "NODE_USE_V8_PLATFORM=0" ]
+  }
+}
+
+##### node_headers
+
+node_headers_dir = "$root_gen_dir/node_headers/include/node"
+
+copy("node_headers") {
+  deps = [
+    ":generate_config_gypi",
+  ]
+  sources = [
+    "$target_gen_dir/config.gypi",
+    "common.gypi",
+    "src/node.h",
+    "src/node_api.h",
+    "src/node_api_types.h",
+    "src/node_buffer.h",
+    "src/node_object_wrap.h",
+    "src/node_version.h",
+  ]
+  outputs = [
+    "$node_headers_dir/{{source_file_part}}",
+  ]
+}
+
+copy("v8_headers") {
+  sources = [
+    "//v8/include/v8-inspector-protocol.h",
+    "//v8/include/v8-inspector.h",
+    "//v8/include/v8-platform.h",
+    "//v8/include/v8-profiler.h",
+    "//v8/include/v8-testing.h",
+    "//v8/include/v8-util.h",
+    "//v8/include/v8-value-serializer-version.h",
+    "//v8/include/v8-version-string.h",
+    "//v8/include/v8-version.h",
+    "//v8/include/v8.h",
+    "//v8/include/v8config.h",
+  ]
+  outputs = [
+    "$node_headers_dir/{{source_file_part}}",
+  ]
+}
+
+copy("v8_platform_headers") {
+  sources = [
+    "//v8/include/libplatform/libplatform-export.h",
+    "//v8/include/libplatform/libplatform.h",
+    "//v8/include/libplatform/v8-tracing.h",
+  ]
+  outputs = [
+    "$node_headers_dir/libplatform/{{source_file_part}}",
+  ]
+}
+
+copy("uv_headers") {
+  sources = [
+    "deps/uv/include/uv/android-ifaddrs.h",
+    "deps/uv/include/uv/pthread-barrier.h",
+    "deps/uv/include/uv/stdint-msvc2008.h",
+    "deps/uv/include/uv/tree.h",
+    "deps/uv/include/uv/aix.h",
+    "deps/uv/include/uv/bsd.h",
+    "deps/uv/include/uv/darwin.h",
+    "deps/uv/include/uv/errno.h",
+    "deps/uv/include/uv/linux.h",
+    "deps/uv/include/uv/os390.h",
+    "deps/uv/include/uv/posix.h",
+    "deps/uv/include/uv/sunos.h",
+    "deps/uv/include/uv/threadpool.h",
+    "deps/uv/include/uv/unix.h",
+    "deps/uv/include/uv/version.h",
+    "deps/uv/include/uv/win.h",
+    "deps/uv/include/uv.h",
+  ]
+  outputs = [
+    "$node_headers_dir/{{source_file_part}}",
+  ]
+}
+
+copy("zlib_headers") {
+  sources = [
+    "//third_party/zlib/zconf.h",
+    "//third_party/zlib/zlib.h",
+  ]
+  outputs = [
+    "$node_headers_dir/{{source_file_part}}",
+  ]
+}
+
+group("headers") {
+  public_deps = [
+    ":node_headers",
+    ":uv_headers",
+    ":v8_headers",
+    ":v8_platform_headers",
+    ":zlib_headers",
+  ]
+}

@@ -1,0 +1,186 @@
+config("libuv_config") {
+  include_dirs = [ "include" ]
+
+  defines = []
+
+  if (is_linux) {
+    defines += [ "_POSIX_C_SOURCE=200112" ]
+  }
+  if (!is_win) {
+    defines += [
+      "_LARGEFILE_SOURCE",
+      "_FILE_OFFSET_BITS=64",
+    ]
+  }
+  if (is_mac) {
+    defines += [ "_DARWIN_USE_64_BIT_INODE=1" ]
+  }
+}
+
+static_library("uv") {
+  include_dirs = [
+    "include",
+    "src",
+  ]
+
+  public_configs = [ ":libuv_config" ]
+
+  ldflags = []
+
+  defines = []
+
+  cflags_c = [
+    "-Wno-bitwise-op-parentheses",
+    "-Wno-implicit-function-declaration",
+    "-Wno-missing-braces",
+    "-Wno-sign-compare",
+    "-Wno-sometimes-uninitialized",
+    "-Wno-string-conversion",
+    "-Wno-switch",
+    "-Wno-unused-function",
+    "-Wno-unused-variable",
+  ]
+
+  libs = []
+
+  sources = [
+    "include/uv.h",
+    "include/uv/errno.h",
+    "include/uv/threadpool.h",
+    "include/uv/tree.h",
+    "include/uv/version.h",
+    "src/fs-poll.c",
+    "src/heap-inl.h",
+    "src/inet.c",
+    "src/queue.h",
+    "src/threadpool.c",
+    "src/timer.c",
+    "src/uv-common.c",
+    "src/uv-common.h",
+    "src/uv-data-getter-setters.c",
+    "src/version.c"
+  ]
+
+  if (is_win) {
+    defines += [
+      "_GNU_SOURCE",
+    ]
+    sources += [
+      "include/uv/win.h",
+      "src/win/async.c",
+      "src/win/atomicops-inl.h",
+      "src/win/core.c",
+      "src/win/detect-wakeup.c",
+      "src/win/dl.c",
+      "src/win/error.c",
+      "src/win/fs-event.c",
+      "src/win/fs.c",
+      "src/win/getaddrinfo.c",
+      "src/win/getnameinfo.c",
+      "src/win/handle-inl.h",
+      "src/win/handle.c",
+      "src/win/internal.h",
+      "src/win/loop-watcher.c",
+      "src/win/pipe.c",
+      "src/win/poll.c",
+      "src/win/process-stdio.c",
+      "src/win/process.c",
+      "src/win/req-inl.h",
+      "src/win/req.c",
+      "src/win/signal.c",
+      "src/win/snprintf.c",
+      "src/win/stream-inl.h",
+      "src/win/stream.c",
+      "src/win/tcp.c",
+      "src/win/thread.c",
+      "src/win/tty.c",
+      "src/win/udp.c",
+      "src/win/util.c",
+      "src/win/winapi.c",
+      "src/win/winapi.h",
+      "src/win/winsock.c",
+      "src/win/winsock.h",
+    ]
+    libs += [
+      "advapi32.lib",
+      "iphlpapi.lib",
+      "psapi.lib",
+      "shell32.lib",
+      "user32.lib",
+      "userenv.lib",
+      "ws2_32.lib",
+    ]
+  } else {
+    sources += [
+      "include/uv/aix.h",
+      "include/uv/bsd.h",
+      "include/uv/darwin.h",
+      "include/uv/linux.h",
+      "include/uv/sunos.h",
+      "include/uv/unix.h",
+      "src/unix/async.c",
+      "src/unix/atomic-ops.h",
+      "src/unix/core.c",
+      "src/unix/dl.c",
+      "src/unix/fs.c",
+      "src/unix/getaddrinfo.c",
+      "src/unix/getnameinfo.c",
+      "src/unix/internal.h",
+      "src/unix/loop-watcher.c",
+      "src/unix/loop.c",
+      "src/unix/pipe.c",
+      "src/unix/poll.c",
+      "src/unix/process.c",
+      "src/unix/signal.c",
+      "src/unix/spinlock.h",
+      "src/unix/stream.c",
+      "src/unix/tcp.c",
+      "src/unix/thread.c",
+      "src/unix/tty.c",
+      "src/unix/udp.c",
+    ]
+    libs += [ "m" ]
+    ldflags += [ "-pthread" ]
+  }
+  if (is_mac || is_linux) {
+    sources += [ "src/unix/proctitle.c" ]
+  }
+  if (is_mac) {
+    sources += [
+      "src/unix/darwin-proctitle.c",
+      "src/unix/darwin.c",
+      "src/unix/fsevents.c",
+    ]
+    defines += [
+      "_DARWIN_USE_64_BIT_INODE=1",
+      "_DARWIN_UNLIMITED_SELECT=1",
+    ]
+  }
+  if (is_linux) {
+    defines += [ "_GNU_SOURCE" ]
+    sources += [
+      "src/unix/linux-core.c",
+      "src/unix/linux-inotify.c",
+      "src/unix/linux-syscalls.c",
+      "src/unix/linux-syscalls.h",
+      "src/unix/procfs-exepath.c",
+      "src/unix/sysinfo-loadavg.c",
+      "src/unix/sysinfo-memory.c",
+    ]
+    libs += [
+      "dl",
+      "rt",
+    ]
+  }
+  if (is_mac) {  # is_bsd
+    sources += [
+      "src/unix/bsd-ifaddrs.c",
+      "src/unix/kqueue.c",
+    ]
+  }
+  if (is_component_build && is_win) {
+    defines += [
+      "BUILDING_UV_SHARED=1",
+    ]
+  }
+}
