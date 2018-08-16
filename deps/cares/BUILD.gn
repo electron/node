@@ -9,6 +9,12 @@ static_library("cares") {
   ]
   public_configs = [ ":cares_config" ]
 
+  libs = []
+  cflags_c = [
+    "-Wno-logical-not-parentheses",
+    "-Wno-sign-compare",
+  ]
+
   sources = [
     "include/ares.h",
     "include/ares_rules.h",
