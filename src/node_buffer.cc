@@ -254,8 +254,10 @@ MaybeLocal<Object> New(Isolate* isolate,
       isolate->GetArrayBufferAllocator()->Free(data, length);
       data = nullptr;
     } else if (actual < length) {
-      // We should call realloc here, but v8::ArrayBufferAllocator does not
-      // provide such ability.
+      data = isolate->GetArrayBufferAllocator()->Realloc(data, length);
+      if ((data != nullptr) && zero_fill_all_buffers) {
+        memset(data, '\0', length);
+      }
     }
   }
 
