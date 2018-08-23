@@ -254,10 +254,7 @@ MaybeLocal<Object> New(Isolate* isolate,
       isolate->GetArrayBufferAllocator()->Free(data, length);
       data = nullptr;
     } else if (actual < length) {
-      data = isolate->GetArrayBufferAllocator()->Realloc(data, length);
-      if ((data != nullptr) && zero_fill_all_buffers) {
-        memset(data, '\0', length);
-      }
+      data = isolate->GetArrayBufferAllocator()->Realloc(data, actual);
     }
   }
 
