@@ -48,6 +48,12 @@ source_set("inspector") {
   ]
   defines = [ "NODE_WANT_INTERNALS=1" ]
   public_configs = [ ":inspector_config" ]
+
+  if (is_component_build) {
+    defines += [      
+      "USING_V8_SHARED",
+    ]
+  }
 }
 
 inspector_protocol_generate("protocol_generated_sources") {

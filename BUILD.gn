@@ -303,6 +303,11 @@ component("node_lib") {
   ]
   defines = [ "NODE_WANT_INTERNALS=1" ]
 
+  if (is_component_build)
+  {
+    defines += ["BUILDING_NODE_FOR_ELECTRON"]
+  }
+
   if (target_cpu == "x86") {
     node_arch = "ia32"
   } else {

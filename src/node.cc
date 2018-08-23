@@ -173,8 +173,8 @@ using v8::Value;
 static Mutex process_mutex;
 static Mutex environ_mutex;
 
-bool g_standalone_mode = true;
-bool g_upstream_node_mode = true;
+NODE_EXTERN2 bool g_standalone_mode = true;
+NODE_EXTERN2 bool g_upstream_node_mode = true;
 
 static bool print_eval = false;
 static bool force_repl = false;
