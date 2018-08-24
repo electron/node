@@ -301,11 +301,18 @@ component("node_lib") {
     "-Wno-unused-private-field",
     "-Wno-unused-variable",
   ]
-  defines = [ "NODE_WANT_INTERNALS=1" ]
+  defines = [
+    "NODE_WANT_INTERNALS=1",
+    "NODE_WITHOUT_NODE_OPTIONS",
+  ]
 
-  if (is_component_build)
-  {
-    defines += ["BUILDING_NODE_FOR_ELECTRON"]
+  if (is_component_build) {
+    defines += [
+      "BUILDING_V8_SHARED",
+      "BUILDING_V8_PLATFORM_SHARED",
+      "BUILDING_V8_BASE_SHARED",
+      "NODE_SHARED_MODE",
+    ]
   }
 
   if (target_cpu == "x86") {

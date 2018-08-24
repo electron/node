@@ -131,8 +131,8 @@ NODE_EXTERN extern bool force_fips_crypto;
 #endif
 
 // Whether node should open some low level hooks.
-NODE_EXTERN2 extern bool g_standalone_mode;
-NODE_EXTERN2 extern bool g_upstream_node_mode;
+NODE_EXTERN extern bool g_standalone_mode;
+NODE_EXTERN extern bool g_upstream_node_mode;
 
 NODE_EXTERN int Start(int argc, char *argv[]);
 NODE_EXTERN void Init(int* argc,

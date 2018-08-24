@@ -11,16 +11,6 @@
 # define NODE_EXTERN __attribute__((visibility("default")))
 #endif
 
-#ifdef _WIN32
-# ifdef BUILDING_NODE_FOR_ELECTRON
-#   define NODE_EXTERN2 __declspec(dllexport)
-# else
-#   define NODE_EXTERN2 __declspec(dllimport)
-# endif
-#else
-# define NODE_EXTERN2 __attribute__((visibility("default")))
-#endif
-
 #define NODE_MAKE_VERSION(major, minor, patch)                                \
   ((major) * 0x1000 + (minor) * 0x100 + (patch))
 
