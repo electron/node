@@ -179,4 +179,9 @@ static_library("uv") {
       "src/unix/kqueue.c",
     ]
   }
+  if (is_component_build && is_win) {
+    defines += [
+      "BUILDING_UV_SHARED=1",
+    ]
+  }
 }
