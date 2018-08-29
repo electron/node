@@ -16,7 +16,7 @@ more information on using Node.js, see the
 
 #### Overview 
 
-The Electron Project embeds Node, which allows developers to leverage all of Node's capabilities and access the filesystem on your deksotp computing platform. We embed different versions of Node in different release lines of Electron, chosen such that they depend on a version of V8 compatible with the version of V8 present in the Chromium version used for that release line.
+The Electron Project embeds Node, which allows developers to leverage all of Node's capabilities and access the filesystem on your desktop platform. Electron embeds different versions of Node in different release lines of Electron. These versions are chosen such that they depend on a version of V8 compatible with the version of V8 present in the Chromium version used for that release line.
 
 #### Branching Strategy:
 `master` in this fork is an unused branch; a version of Node present in a release line can be found in a branch with the naming scheme
