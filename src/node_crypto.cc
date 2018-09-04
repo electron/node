@@ -2343,7 +2343,7 @@ int SSLWrap<Base>::TLSExtStatusCallback(SSL* s, void* arg) {
 
     // OpenSSL takes control of the pointer after accepting it
     auto* allocator = env->isolate()->GetArrayBufferAllocator();
-    char* data = static_cast<char*>(allocator->AllocateUninitialized(len));
+    uint8_t* data = static_cast<uint8_t*>(allocator->AllocateUninitialized(len));
     memcpy(data, resp, len);
 
     if (!SSL_set_tlsext_status_ocsp_resp(s, data, len))
