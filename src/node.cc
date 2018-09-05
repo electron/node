@@ -4065,16 +4065,16 @@ Local<Context> NewContext(Isolate* isolate,
   context->SetEmbedderData(
       ContextEmbedderIndex::kAllowWasmCodeGeneration, True(isolate));
 
-  {
-    // Run lib/internal/per_context.js
-    Context::Scope context_scope(context);
-    Local<String> per_context = NodePerContextSource(isolate);
-    v8::ScriptCompiler::Source per_context_src(per_context, nullptr);
-    Local<v8::Script> s = v8::ScriptCompiler::Compile(
-        context,
-        &per_context_src).ToLocalChecked();
-    s->Run(context).ToLocalChecked();
-  }
+  // {
+  //   // Run lib/internal/per_context.js
+  //   Context::Scope context_scope(context);
+  //   Local<String> per_context = NodePerContextSource(isolate);
+  //   v8::ScriptCompiler::Source per_context_src(per_context, nullptr);
+  //   Local<v8::Script> s = v8::ScriptCompiler::Compile(
+  //       context,
+  //       &per_context_src).ToLocalChecked();
+  //   s->Run(context).ToLocalChecked();
+  // }
 
   return context;
 }
