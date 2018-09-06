@@ -45,10 +45,10 @@ static_library("uv") {
 
   sources = [
     "include/tree.h",
-    "include/uv-errno.h",
-    "include/uv-threadpool.h",
-    "include/uv-version.h",
     "include/uv.h",
+    "include/uv/errno.h",
+    "include/uv/threadpool.h",
+    "include/uv/version.h",
     "src/fs-poll.c",
     "src/heap-inl.h",
     "src/inet.c",
@@ -65,7 +65,7 @@ static_library("uv") {
       "_GNU_SOURCE",
     ]
     sources += [
-      "include/uv-win.h",
+      "include/uv/win.h",
       "src/win/async.c",
       "src/win/atomicops-inl.h",
       "src/win/core.c",
@@ -112,12 +112,12 @@ static_library("uv") {
     ]
   } else {
     sources += [
-      "include/uv-aix.h",
-      "include/uv-bsd.h",
-      "include/uv-darwin.h",
-      "include/uv-linux.h",
-      "include/uv-sunos.h",
-      "include/uv-unix.h",
+      "include/uv/aix.h",
+      "include/uv/bsd.h",
+      "include/uv/darwin.h",
+      "include/uv/linux.h",
+      "include/uv/sunos.h",
+      "include/uv/unix.h",
       "src/unix/async.c",
       "src/unix/atomic-ops.h",
       "src/unix/core.c",
