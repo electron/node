@@ -1,16 +1,6 @@
 config("nghttp2_config") {
   defines = [ "NGHTTP2_STATICLIB" ]
   include_dirs = [ "lib/includes" ]
-
-  if (is_win) {
-    # Node uses these to decide whether to redefine ssize_t on windows. In all
-    # the configurations we care about, ssize_t is already defined, so
-    # indicate to node that it doesn't need to redefine them.
-    defines += [
-      "_SSIZE_T_DEFINED",
-      "_SSIZE_T_",
-    ]
-  }
 }
 static_library("nghttp2") {
   public_configs = [ ":nghttp2_config" ]

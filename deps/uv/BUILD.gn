@@ -15,15 +15,6 @@ config("libuv_config") {
   if (is_mac) {
     defines += [ "_DARWIN_USE_64_BIT_INODE=1" ]
   }
-  if (is_win) {
-    # libuv uses these to decide whether to redefine ssize_t on windows. In
-    # all the configurations we care about, ssize_t is already defined, so
-    # indicate to node that it doesn't need to redefine them.
-    defines += [
-      "_SSIZE_T_DEFINED",
-      "_SSIZE_T_",
-    ]
-  }
 }
 
 static_library("uv") {
