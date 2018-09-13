@@ -27,6 +27,7 @@
 #include "env-inl.h"
 #include "memory_tracker-inl.h"
 #include "node_binding.h"
+#include "node_errors.h"
 #include "node_internals.h"
 #include "node_main_instance.h"
 #include "node_metadata.h"
@@ -131,6 +132,9 @@ using v8::Undefined;
 using v8::V8;
 using v8::Value;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 namespace per_process {
 
 // node_revert.h
@@ -224,6 +228,12 @@ MaybeLocal<Value> ExecuteBootstrapper(Environment* env,
 
 MaybeLocal<Value> RunBootstrapping(Environment* env) {
   CHECK(!env->has_run_bootstrapping_code());
+  if (g_standalone_mode) {
+    env->isolate()->AddMessageListener(errors::PerIsolateMessageListener);
+  }
+  if (g_upstream_node_mode) {
+    env->isolate()->SetFatalErrorHandler(OnFatalError);
+  }
 
   EscapableHandleScope scope(env->isolate());
   Isolate* isolate = env->isolate();
@@ -618,7 +628,9 @@ int InitializeNodeWithArgs(std::vector<std::string>* argv,
   binding::RegisterBuiltinModules();
 
   // Make inherited handles noninheritable.
-  uv_disable_stdio_inheritance();
+  if (g_upstream_node_mode) {
+    uv_disable_stdio_inheritance();
+  }
 
 #ifdef NODE_REPORT
   // Cache the original command line to be
@@ -720,6 +732,9 @@ int InitializeNodeWithArgs(std::vector<std::string>* argv,
   }
 #endif
 
+  if (g_upstream_node_mode) {
+  // NOTE(jeremy): indentation is intentionally wrong here, to ease rebasing.
+
   const int exit_code = ProcessGlobalArgs(argv, exec_argv, errors, false);
   if (exit_code != 0) return exit_code;
 
@@ -741,6 +756,8 @@ int InitializeNodeWithArgs(std::vector<std::string>* argv,
   }
   per_process::metadata.versions.InitializeIntlVersions();
 #endif
+
+  }  // g_upstream_node_mode
 
   NativeModuleEnv::InitializeCodeCache();
 
