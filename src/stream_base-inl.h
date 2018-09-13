@@ -429,6 +429,12 @@ inline size_t WriteWrap::StorageSize() const {
   return storage_size_;
 }
 
+inline WriteWrap::~WriteWrap() {
+  Environment* env = stream()->stream_env();
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  allocator->Free(storage_, storage_size_);
+}
+
 inline void WriteWrap::OnDone(int status) {
   stream()->EmitAfterWrite(this, status);
   Dispose();

@@ -81,10 +81,7 @@ class WriteWrap : public StreamReq {
   WriteWrap(StreamBase* stream,
             v8::Local<v8::Object> req_wrap_obj)
     : StreamReq(stream, req_wrap_obj) { }
-
-  ~WriteWrap() {
-    free(storage_);
-  }
+  ~WriteWrap();
 
   // Call stream()->EmitAfterWrite() and dispose of this request wrap.
   void OnDone(int status) override;

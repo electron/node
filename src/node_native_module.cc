@@ -141,7 +141,8 @@ MaybeLocal<Uint8Array> NativeModuleLoader::GetCodeCache(Isolate* isolate,
 
   cached_data = it->second.get();
 
-  MallocedBuffer<uint8_t> copied(cached_data->length);
+  MallocedBuffer<uint8_t> copied(cached_data->length,
+                                 isolate->GetArrayBufferAllocator());
   memcpy(copied.data, cached_data->data, cached_data->length);
   Local<ArrayBuffer> buf =
       ArrayBuffer::New(isolate,
