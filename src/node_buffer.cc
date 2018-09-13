@@ -57,10 +57,11 @@ namespace node {
 
 namespace {
 
-inline void* BufferMalloc(size_t length) {
+inline void* BufferMalloc(v8::Isolate* isolate, size_t length) {
+  auto* allocator = isolate->GetArrayBufferAllocator();
   return per_process_opts->zero_fill_all_buffers ?
-      node::UncheckedCalloc(length) :
-      node::UncheckedMalloc(length);
+      allocator->Allocate(length) :
+      allocator->AllocateUninitialized(length);
 }
 
 }  // namespace
@@ -241,7 +242,7 @@ MaybeLocal<Object> New(Isolate* isolate,
   char* data = nullptr;
 
   if (length > 0) {
-    data = static_cast<char*>(BufferMalloc(length));
+    data = static_cast<char*>(BufferMalloc(isolate, length));
 
     if (data == nullptr) {
       THROW_ERR_MEMORY_ALLOCATION_FAILED(isolate);
@@ -252,10 +253,14 @@ MaybeLocal<Object> New(Isolate* isolate,
     CHECK(actual <= length);
 
     if (actual == 0) {
-      free(data);
+      isolate->GetArrayBufferAllocator()->Free(data, length);
       data = nullptr;
     } else if (actual < length) {
-      data = node::Realloc(data, actual);
+      auto* allocator = isolate->GetArrayBufferAllocator();
+      auto* excessive_data = data;
+      data = static_cast<char*>(allocator->AllocateUninitialized(actual));
+      memcpy(data, excessive_data, actual);
+      allocator->Free(excessive_data, length);
     }
   }
 
@@ -264,7 +269,7 @@ MaybeLocal<Object> New(Isolate* isolate,
     return scope.Escape(buf);
 
   // Object failed to be created. Clean up resources.
-  free(data);
+  isolate->GetArrayBufferAllocator()->Free(data, length);
   return Local<Object>();
 }
 
@@ -294,7 +299,7 @@ MaybeLocal<Object> New(Environment* env, size_t length) {
 
   void* data;
   if (length > 0) {
-    data = BufferMalloc(length);
+    data = BufferMalloc(env->isolate(), length);
     if (data == nullptr) {
       THROW_ERR_MEMORY_ALLOCATION_FAILED(env);
       return Local<Object>();
@@ -311,6 +316,10 @@ MaybeLocal<Object> New(Environment* env, size_t length) {
   Local<Object> obj;
   if (Buffer::New(env, ab, 0, length).ToLocal(&obj))
     return scope.Escape(obj);
+
+  // Object failed to be created. Clean up resources.
+  env->isolate()->GetArrayBufferAllocator()->Free(data, length);
+
   return Local<Object>();
 }
 
@@ -338,10 +347,11 @@ MaybeLocal<Object> Copy(Environment* env, const char* data, size_t length) {
     return Local<Object>();
   }
 
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
   void* new_data;
   if (length > 0) {
     CHECK_NOT_NULL(data);
-    new_data = node::UncheckedMalloc(length);
+    new_data = allocator->AllocateUninitialized(length);
     if (new_data == nullptr) {
       THROW_ERR_MEMORY_ALLOCATION_FAILED(env);
       return Local<Object>();
@@ -359,6 +369,10 @@ MaybeLocal<Object> Copy(Environment* env, const char* data, size_t length) {
   Local<Object> obj;
   if (Buffer::New(env, ab, 0, length).ToLocal(&obj))
     return scope.Escape(obj);
+
+  // Object failed to be created. Clean up resources.
+  allocator->Free(new_data, length);
+
   return Local<Object>();
 }
 

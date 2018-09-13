@@ -529,6 +529,7 @@ class Sign : public SignBase {
   };
 
   SignResult SignFinal(
+      Environment* env,
       const char* key_pem,
       int key_pem_len,
       const char* passphrase,
@@ -584,7 +585,8 @@ class PublicKeyCipher {
   template <Operation operation,
             EVP_PKEY_cipher_init_t EVP_PKEY_cipher_init,
             EVP_PKEY_cipher_t EVP_PKEY_cipher>
-  static bool Cipher(const char* key_pem,
+  static bool Cipher(Environment* env,
+                     const char* key_pem,
                      int key_pem_len,
                      const char* passphrase,
                      int padding,
