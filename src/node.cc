@@ -141,6 +141,9 @@ using v8::Undefined;
 using v8::V8;
 using v8::Value;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool v8_is_profiling = false;
 
 // Bit flag used to track security reverts (see node_revert.h)
@@ -1167,6 +1170,13 @@ static MaybeLocal<Value> ExecuteBootstrapper(
 }
 
 void LoadEnvironment(Environment* env) {
+  if (g_standalone_mode) {
+    env->isolate()->AddMessageListener(OnMessage);
+  }
+  if (g_upstream_node_mode) {
+    env->isolate()->SetFatalErrorHandler(OnFatalError);
+  }
+
   HandleScope handle_scope(env->isolate());
   Isolate* isolate = env->isolate();
   Local<Context> context = env->context();
@@ -1575,7 +1585,9 @@ void Init(std::vector<std::string>* argv,
   binding::RegisterBuiltinModules();
 
   // Make inherited handles noninheritable.
-  uv_disable_stdio_inheritance();
+  if (g_upstream_node_mode) {
+    uv_disable_stdio_inheritance();
+  }
 
 #if defined(NODE_V8_OPTIONS)
   // Should come before the call to V8::SetFlagsFromCommandLine()
@@ -1645,6 +1657,9 @@ void Init(std::vector<std::string>* argv,
   }
 #endif
 
+  if (g_upstream_node_mode) {
+  // NOTE(jeremy): indentation is intentionally wrong here, to ease rebasing.
+
   ProcessArgv(argv, exec_argv, false);
 
   // Set the process.title immediately after processing argv if --title is set.
@@ -1665,6 +1680,8 @@ void Init(std::vector<std::string>* argv,
     exit(9);
   }
 #endif
+
+  }  // g_upstream_node_mode
 
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be
