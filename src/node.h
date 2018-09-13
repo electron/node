@@ -203,6 +203,9 @@ namespace node {
 
 class IsolateData;
 class Environment;
+// Whether node should open some low level hooks.
+NODE_EXTERN extern bool g_standalone_mode;
+NODE_EXTERN extern bool g_upstream_node_mode;
 
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.

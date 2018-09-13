@@ -45,7 +45,7 @@ static bool ShouldAbortOnUncaughtException(Isolate* isolate) {
          !env->inside_should_not_abort_on_uncaught_scope();
 }
 
-static void OnMessage(Local<Message> message, Local<Value> error) {
+void OnMessage(Local<Message> message, Local<Value> error) {
   Isolate* isolate = message->GetIsolate();
   switch (message->ErrorLevel()) {
     case Isolate::MessageErrorLevel::kMessageWarning: {

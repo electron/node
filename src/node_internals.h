@@ -190,6 +190,8 @@ static v8::MaybeLocal<v8::Object> New(Environment* env,
 }
 }  // namespace Buffer
 
+void OnMessage(v8::Local<v8::Message> message, v8::Local<v8::Value> error);
+
 v8::MaybeLocal<v8::Value> InternalMakeCallback(
     Environment* env,
     v8::Local<v8::Object> recv,
