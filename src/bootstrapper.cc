@@ -124,7 +124,10 @@ void SetupPromises(const FunctionCallbackInfo<Value>& args) {
   NODE_DEFINE_CONSTANT(constants, kPromiseResolveAfterResolved);
   NODE_DEFINE_CONSTANT(constants, kPromiseRejectAfterResolved);
 
-  isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  if (g_standalone_mode) { 
+    isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  }
+
   env->set_promise_handler_function(args[0].As<Function>());
 }
 
