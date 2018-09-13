@@ -87,14 +87,12 @@ void SetupPromises(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   Isolate* isolate = env->isolate();
 
-  if (g_standalone_mode) {  // No indent to minimize diff.
-    isolate->SetPromiseRejectCallback(PromiseRejectCallback);
-  }
-
   CHECK(args[0]->IsFunction());
   CHECK(args[1]->IsFunction());
 
+  if (g_standalone_mode) {  // No indent to minimize diff.
   isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  }
   env->set_promise_reject_unhandled_function(args[0].As<Function>());
   env->set_promise_reject_handled_function(args[1].As<Function>());
 }
