@@ -169,6 +169,9 @@ using v8::Undefined;
 using v8::V8;
 using v8::Value;
 
+bool g_standalone_mode = true;
+bool g_upstream_node_mode = true;
+
 static bool v8_is_profiling = false;
 static bool node_is_initialized = false;
 static uv_once_t init_modpending_once = UV_ONCE_INIT;
@@ -2084,6 +2087,13 @@ static bool ExecuteBootstrapper(Environment* env, Local<Function> bootstrapper,
 
 
 void LoadEnvironment(Environment* env) {
+  if (g_standalone_mode) {
+    env->isolate()->AddMessageListener(OnMessage);
+  }
+  if (g_upstream_node_mode) {
+    env->isolate()->SetFatalErrorHandler(OnFatalError);
+  }
+
   HandleScope handle_scope(env->isolate());
 
   TryCatch try_catch(env->isolate());
@@ -2511,7 +2521,9 @@ void Init(std::vector<std::string>* argv,
   RegisterBuiltinModules();
 
   // Make inherited handles noninheritable.
-  uv_disable_stdio_inheritance();
+  if (g_upstream_node_mode) {
+    uv_disable_stdio_inheritance();
+  }
 
 #if defined(NODE_V8_OPTIONS)
   // Should come before the call to V8::SetFlagsFromCommandLine()
@@ -2578,6 +2590,9 @@ void Init(std::vector<std::string>* argv,
   }
 #endif
 
+  if (g_upstream_node_mode) {
+  // NOTE(jeremy): indentation is intentionally wrong here, to ease rebasing.
+
   ProcessArgv(argv, exec_argv, false);
 
   // Set the process.title immediately after processing argv if --title is set.
@@ -2598,6 +2613,8 @@ void Init(std::vector<std::string>* argv,
     exit(9);
   }
 #endif
+
+  }  // g_upstream_node_mode
 
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be
