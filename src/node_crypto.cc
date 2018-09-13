@@ -1873,7 +1873,8 @@ void SSLWrap<Base>::GetFinished(const FunctionCallbackInfo<Value>& args) {
   if (len == 0)
     return;
 
-  char* buf = Malloc(len);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* buf = static_cast<char*>(allocator->AllocateUninitialized(len));
   CHECK_EQ(len, SSL_get_finished(w->ssl_.get(), buf, len));
   args.GetReturnValue().Set(Buffer::New(env, buf, len).ToLocalChecked());
 }
@@ -1896,7 +1897,8 @@ void SSLWrap<Base>::GetPeerFinished(const FunctionCallbackInfo<Value>& args) {
   if (len == 0)
     return;
 
-  char* buf = Malloc(len);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* buf = static_cast<char*>(allocator->AllocateUninitialized(len));
   CHECK_EQ(len, SSL_get_peer_finished(w->ssl_.get(), buf, len));
   args.GetReturnValue().Set(Buffer::New(env, buf, len).ToLocalChecked());
 }
@@ -1916,7 +1918,8 @@ void SSLWrap<Base>::GetSession(const FunctionCallbackInfo<Value>& args) {
   int slen = i2d_SSL_SESSION(sess, nullptr);
   CHECK_GT(slen, 0);
 
-  char* sbuf = Malloc(slen);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* sbuf = static_cast<char*>(allocator->AllocateUninitialized(slen));
   unsigned char* p = reinterpret_cast<unsigned char*>(sbuf);
   i2d_SSL_SESSION(sess, &p);
   args.GetReturnValue().Set(Buffer::New(env, sbuf, slen).ToLocalChecked());
@@ -2338,11 +2341,12 @@ int SSLWrap<Base>::TLSExtStatusCallback(SSL* s, void* arg) {
     size_t len = Buffer::Length(obj);
 
     // OpenSSL takes control of the pointer after accepting it
-    char* data = node::Malloc(len);
+    auto* allocator = env->isolate()->GetArrayBufferAllocator();
+    uint8_t* data = static_cast<uint8_t*>(allocator->AllocateUninitialized(len));
     memcpy(data, resp, len);
 
     if (!SSL_set_tlsext_status_ocsp_resp(s, data, len))
-      free(data);
+      allocator->Free(data, len);
     w->ocsp_response_.Reset();
 
     return SSL_TLSEXT_ERR_OK;
@@ -3014,7 +3018,8 @@ CipherBase::UpdateResult CipherBase::Update(const char* data,
     return kErrorState;
   }
 
-  *out = Malloc<unsigned char>(buff_len);
+  auto* allocator = env()->isolate()->GetArrayBufferAllocator();
+  *out = static_cast<unsigned char*>(allocator->AllocateUninitialized(buff_len));
   int r = EVP_CipherUpdate(ctx_.get(),
                            *out,
                            out_len,
@@ -3057,7 +3062,8 @@ void CipherBase::Update(const FunctionCallbackInfo<Value>& args) {
   }
 
   if (r != kSuccess) {
-    free(out);
+    auto* allocator = env->isolate()->GetArrayBufferAllocator();
+    allocator->Free(out, out_len);
     if (r == kErrorState) {
       ThrowCryptoError(env, ERR_get_error(),
                        "Trying to add data in unsupported state");
@@ -3096,8 +3102,9 @@ bool CipherBase::Final(unsigned char** out, int* out_len) {
 
   const int mode = EVP_CIPHER_CTX_mode(ctx_.get());
 
-  *out = Malloc<unsigned char>(
-      static_cast<size_t>(EVP_CIPHER_CTX_block_size(ctx_.get())));
+  auto* allocator = env()->isolate()->GetArrayBufferAllocator();
+  *out = static_cast<unsigned char*>(allocator->AllocateUninitialized(
+      EVP_CIPHER_CTX_block_size(ctx_.get())));
 
   if (kind_ == kDecipher && IsSupportedAuthenticatedMode(mode)) {
     MaybePassAuthTagToOpenSSL();
@@ -3146,7 +3153,8 @@ void CipherBase::Final(const FunctionCallbackInfo<Value>& args) {
   bool r = cipher->Final(&out_value, &out_len);
 
   if (out_len <= 0 || !r) {
-    free(out_value);
+    auto* allocator = env->isolate()->GetArrayBufferAllocator();
+    allocator->Free(out_value, out_len);
     out_value = nullptr;
     out_len = 0;
     if (!r) {
@@ -3826,7 +3834,8 @@ void Verify::VerifyFinal(const FunctionCallbackInfo<Value>& args) {
 template <PublicKeyCipher::Operation operation,
           PublicKeyCipher::EVP_PKEY_cipher_init_t EVP_PKEY_cipher_init,
           PublicKeyCipher::EVP_PKEY_cipher_t EVP_PKEY_cipher>
-bool PublicKeyCipher::Cipher(const char* key_pem,
+bool PublicKeyCipher::Cipher(Environment* env,
+                             const char* key_pem,
                              int key_pem_len,
                              const char* passphrase,
                              int padding,
@@ -3835,6 +3844,7 @@ bool PublicKeyCipher::Cipher(const char* key_pem,
                              unsigned char** out,
                              size_t* out_len) {
   EVPKeyPointer pkey;
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
 
   // Check if this is a PKCS#8 or RSA public key before trying as X.509 and
   // private key.
@@ -3867,7 +3877,7 @@ bool PublicKeyCipher::Cipher(const char* key_pem,
   if (EVP_PKEY_cipher(ctx.get(), nullptr, out_len, data, len) <= 0)
     return false;
 
-  *out = Malloc<unsigned char>(*out_len);
+  *out = static_cast<unsigned char*>(allocator->AllocateUninitialized(*out_len));
 
   if (EVP_PKEY_cipher(ctx.get(), *out, out_len, data, len) <= 0)
     return false;
@@ -3901,6 +3911,7 @@ void PublicKeyCipher::Cipher(const FunctionCallbackInfo<Value>& args) {
   ClearErrorOnReturn clear_error_on_return;
 
   bool r = Cipher<operation, EVP_PKEY_cipher_init, EVP_PKEY_cipher>(
+      env,
       kbuf,
       klen,
       args.Length() >= 4 && !args[3]->IsNull() ? *passphrase : nullptr,
@@ -3911,7 +3922,8 @@ void PublicKeyCipher::Cipher(const FunctionCallbackInfo<Value>& args) {
       &out_len);
 
   if (out_len == 0 || !r) {
-    free(out_value);
+    auto* allocator = env->isolate()->GetArrayBufferAllocator();
+    allocator->Free(out_value, out_len);
     out_value = nullptr;
     out_len = 0;
     if (!r) {
@@ -4083,7 +4095,8 @@ void DiffieHellman::GenerateKeys(const FunctionCallbackInfo<Value>& args) {
   const BIGNUM* pub_key;
   DH_get0_key(diffieHellman->dh_.get(), &pub_key, nullptr);
   size_t size = BN_num_bytes(pub_key);
-  char* data = Malloc(size);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* data = static_cast<char*>(allocator->AllocateUninitialized(size));
   BN_bn2bin(pub_key, reinterpret_cast<unsigned char*>(data));
   args.GetReturnValue().Set(Buffer::New(env, data, size).ToLocalChecked());
 }
@@ -4101,7 +4114,8 @@ void DiffieHellman::GetField(const FunctionCallbackInfo<Value>& args,
   if (num == nullptr) return env->ThrowError(err_if_null);
 
   size_t size = BN_num_bytes(num);
-  char* data = Malloc(size);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  char* data = static_cast<char*>(allocator->AllocateUninitialized(size));
   BN_bn2bin(num, reinterpret_cast<unsigned char*>(data));
   args.GetReturnValue().Set(Buffer::New(env, data, size).ToLocalChecked());
 }
@@ -4161,7 +4175,8 @@ void DiffieHellman::ComputeSecret(const FunctionCallbackInfo<Value>& args) {
       Buffer::Length(args[0]),
       0));
 
-  MallocedBuffer<char> data(DH_size(diffieHellman->dh_.get()));
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  MallocedBuffer<char> data(DH_size(diffieHellman->dh_.get()), allocator);
 
   int size = DH_compute_key(reinterpret_cast<unsigned char*>(data.data),
                             key.get(),
@@ -4376,13 +4391,14 @@ void ECDH::ComputeSecret(const FunctionCallbackInfo<Value>& args) {
   }
 
   // NOTE: field_size is in bits
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
   int field_size = EC_GROUP_get_degree(ecdh->group_);
   size_t out_len = (field_size + 7) / 8;
-  char* out = node::Malloc(out_len);
+  char* out = static_cast<char*>(allocator->AllocateUninitialized(out_len));
 
   int r = ECDH_compute_key(out, out_len, pub.get(), ecdh->key_.get(), nullptr);
   if (!r) {
-    free(out);
+    allocator->Free(out, out_len);
     return env->ThrowError("Failed to compute ECDH key");
   }
 
@@ -4413,11 +4429,13 @@ void ECDH::GetPublicKey(const FunctionCallbackInfo<Value>& args) {
   if (size == 0)
     return env->ThrowError("Failed to get public key length");
 
-  unsigned char* out = node::Malloc<unsigned char>(size);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  unsigned char* out =
+      static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
 
   int r = EC_POINT_point2oct(ecdh->group_, pub, form, out, size, nullptr);
   if (r != size) {
-    free(out);
+    allocator->Free(out, size);
     return env->ThrowError("Failed to get public key");
   }
 
@@ -4437,11 +4455,13 @@ void ECDH::GetPrivateKey(const FunctionCallbackInfo<Value>& args) {
   if (b == nullptr)
     return env->ThrowError("Failed to get ECDH private key");
 
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
   int size = BN_num_bytes(b);
-  unsigned char* out = node::Malloc<unsigned char>(size);
+  unsigned char* out =
+      static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
 
   if (size != BN_bn2bin(b, out)) {
-    free(out);
+    allocator->Free(out, size);
     return env->ThrowError("Failed to convert ECDH private key to Buffer");
   }
 
@@ -5366,8 +5386,9 @@ void VerifySpkac(const FunctionCallbackInfo<Value>& args) {
 }
 
 
-char* ExportPublicKey(const char* data, int len, size_t* size) {
+char* ExportPublicKey(Environment* env, const char* data, int len, size_t* size) {
   char* buf = nullptr;
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
 
   BIOPointer bio(BIO_new(BIO_s_mem()));
   if (!bio)
@@ -5388,7 +5409,7 @@ char* ExportPublicKey(const char* data, int len, size_t* size) {
   BIO_get_mem_ptr(bio.get(), &ptr);
 
   *size = ptr->length;
-  buf = Malloc(*size);
+  buf = static_cast<char*>(allocator->AllocateUninitialized(*size));
   memcpy(buf, ptr->data, *size);
 
   return buf;
@@ -5406,7 +5427,7 @@ void ExportPublicKey(const FunctionCallbackInfo<Value>& args) {
   CHECK_NOT_NULL(data);
 
   size_t pkey_size;
-  char* pkey = ExportPublicKey(data, length, &pkey_size);
+  char* pkey = ExportPublicKey(env, data, length, &pkey_size);
   if (pkey == nullptr)
     return args.GetReturnValue().SetEmptyString();
 
@@ -5488,11 +5509,13 @@ void ConvertKey(const FunctionCallbackInfo<Value>& args) {
   if (size == 0)
     return env->ThrowError("Failed to get public key length");
 
-  unsigned char* out = node::Malloc<unsigned char>(size);
+  auto* allocator = env->isolate()->GetArrayBufferAllocator();
+  unsigned char* out =
+      static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
 
   int r = EC_POINT_point2oct(group.get(), pub.get(), form, out, size, nullptr);
   if (r != size) {
-    free(out);
+    allocator->Free(out, size);
     return env->ThrowError("Failed to get public key");
   }
 
