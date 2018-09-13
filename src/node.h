@@ -216,6 +216,10 @@ NODE_DEPRECATED("user command-line flags",
 # endif
 #endif
 
+// Whether node should open some low level hooks.
+NODE_EXTERN extern bool g_standalone_mode;
+NODE_EXTERN extern bool g_upstream_node_mode;
+
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.
 NODE_EXTERN int Start(int argc, char* argv[]);
