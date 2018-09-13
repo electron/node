@@ -106,7 +106,10 @@ void SetupPromises(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[0]->IsFunction());
   CHECK(args[1]->IsFunction());
 
-  isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  if (g_standalone_mode) { 
+    isolate->SetPromiseRejectCallback(PromiseRejectCallback);
+  }
+
   env->set_promise_reject_unhandled_function(args[0].As<Function>());
   env->set_promise_reject_handled_function(args[1].As<Function>());
 }
