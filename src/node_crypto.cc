@@ -2670,9 +2670,12 @@ void CipherBase::Init(const FunctionCallbackInfo<Value>& args) {
 }
 
 static bool IsSupportedAuthenticatedMode(int mode) {
+#ifndef OPENSSL_NO_OCB
+  if (mode == EVP_CIPH_OCB_MODE)
+    return true;
+#endif
   return mode == EVP_CIPH_CCM_MODE ||
-         mode == EVP_CIPH_GCM_MODE ||
-         mode == EVP_CIPH_OCB_MODE;
+         mode == EVP_CIPH_GCM_MODE;
 }
 
 void CipherBase::InitIv(const char* cipher_type,
@@ -2793,7 +2796,11 @@ bool CipherBase::InitAuthenticated(const char* cipher_type, int iv_len,
   }
 
   const int mode = EVP_CIPHER_CTX_mode(ctx_.get());
-  if (mode == EVP_CIPH_CCM_MODE || mode == EVP_CIPH_OCB_MODE) {
+  bool needs_auth_tag_length = mode == EVP_CIPH_CCM_MODE;
+#ifndef OPENSSL_NO_OCB
+  needs_auth_tag_length ||= mode == EVP_CIPH_OCB_MODE;
+#endif
+  if (needs_auth_tag_length) {
     if (auth_tag_len == kNoAuthTagLength) {
       char msg[128];
       snprintf(msg, sizeof(msg), "authTagLength required for %s", cipher_type);
@@ -2918,17 +2925,21 @@ void CipherBase::SetAuthTag(const FunctionCallbackInfo<Value>& args) {
           "Valid GCM tag lengths are 4, 8, 12, 13, 14, 15, 16.", tag_len);
       ProcessEmitDeprecationWarning(cipher->env(), msg, "DEP0090");
     }
-  } else if (mode == EVP_CIPH_OCB_MODE) {
-    // At this point, the tag length is already known and must match the
-    // length of the given authentication tag.
-    CHECK(mode == EVP_CIPH_CCM_MODE || mode == EVP_CIPH_OCB_MODE);
-    CHECK_NE(cipher->auth_tag_len_, kNoAuthTagLength);
-    if (cipher->auth_tag_len_ != tag_len) {
-      char msg[50];
-      snprintf(msg, sizeof(msg),
-          "Invalid authentication tag length: %u", tag_len);
-      return cipher->env()->ThrowError(msg);
+  } else {
+#ifndef OPENSSL_NO_OCB
+    if (mode == EVP_CIPH_OCB_MODE) {
+      // At this point, the tag length is already known and must match the
+      // length of the given authentication tag.
+      CHECK(mode == EVP_CIPH_CCM_MODE || mode == EVP_CIPH_OCB_MODE);
+      CHECK_NE(cipher->auth_tag_len_, kNoAuthTagLength);
+      if (cipher->auth_tag_len_ != tag_len) {
+        char msg[50];
+        snprintf(msg, sizeof(msg),
+            "Invalid authentication tag length: %u", tag_len);
+        return cipher->env()->ThrowError(msg);
+      }
     }
+#endif
   }
 
   // Note: we don't use std::min() here to work around a header conflict.
