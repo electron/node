@@ -324,6 +324,7 @@ component("node_lib") {
   defines = [
     "NODE_WANT_INTERNALS=1",
     "NODE_WITHOUT_NODE_OPTIONS",
+    "NODE_IMPLEMENTATION",
   ]
 
   if (is_component_build) {

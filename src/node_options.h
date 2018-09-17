@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "base/export_template.h"
 #include "node_constants.h"
 #include "util.h"
 
@@ -387,7 +388,9 @@ class OptionsParser {
   friend void GetOptions(const v8::FunctionCallbackInfo<v8::Value>& args);
 };
 
-class DebugOptionsParser : public OptionsParser<DebugOptions> {
+extern template class EXPORT_TEMPLATE_DECLARE(NODE_EXTERN) OptionsParser<DebugOptions>;
+
+class NODE_EXTERN DebugOptionsParser : public OptionsParser<DebugOptions> {
  public:
   DebugOptionsParser();
 
