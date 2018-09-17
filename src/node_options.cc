@@ -48,6 +48,8 @@ namespace options_parser {
 // doc/api/cli.md
 // TODO(addaleax): Make that unnecessary.
 
+template class OptionsParser<DebugOptions>;
+
 DebugOptionsParser::DebugOptionsParser() {
 #if HAVE_INSPECTOR
   AddOption("--inspect-port",
