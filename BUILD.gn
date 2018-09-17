@@ -548,6 +548,7 @@ component("node_lib") {
       "EVP_CTRL_AEAD_SET_IVLEN=EVP_CTRL_GCM_SET_IVLEN",
       "EVP_CTRL_CCM_SET_TAG=EVP_CTRL_GCM_SET_TAG",
       "EVP_CTRL_AEAD_GET_TAG=EVP_CTRL_GCM_GET_TAG",
+      "EVP_CTRL_AEAD_SET_TAG=EVP_CTRL_GCM_SET_TAG",
     ]
     cflags_cc += [ "-Wno-sign-compare" ]
   }
