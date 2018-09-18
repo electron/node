@@ -377,7 +377,7 @@ static struct {
   void DrainVMTasks(Isolate* isolate) {}
   void CancelVMTasks(Isolate* isolate) {}
   bool StartInspector(Environment* env, const char* script_path,
-                      const DebugOptions& options) {
+                      std::shared_ptr<DebugOptions> options) {
     env->ThrowError("Node compiled with NODE_USE_V8_PLATFORM=0");
     return true;
   }
