@@ -303,7 +303,7 @@ static struct {
   }
 
   void StartTracingAgent() {
-    if (!trace_enabled_categories.empty()) {
+    if (!per_process_opts->trace_event_categories.empty()) {
       fprintf(stderr, "Node compiled with NODE_USE_V8_PLATFORM=0, "
                       "so event tracing is not available.\n");
     }
