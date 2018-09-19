@@ -340,7 +340,7 @@ class OptionsParser {
   friend void GetOptions(const v8::FunctionCallbackInfo<v8::Value>& args);
 };
 
-extern template class NODE_EXTERN OptionsParser<DebugOptions>;
+extern template class OptionsParser<DebugOptions>;
 
 class NODE_EXTERN DebugOptionsParser : public OptionsParser<DebugOptions> {
  public:
