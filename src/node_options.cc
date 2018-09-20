@@ -48,7 +48,7 @@ namespace options_parser {
 // doc/api/cli.md
 // TODO(addaleax): Make that unnecessary.
 
-template class OptionsParser<DebugOptions>;
+template class EXPORT_TEMPLATE_DEFINE(NODE_EXTERN) OptionsParser<DebugOptions>;
 
 DebugOptionsParser::DebugOptionsParser() {
 #if HAVE_INSPECTOR
