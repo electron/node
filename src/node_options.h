@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include "base/export_template.h"
 #include "node_constants.h"
 
 namespace node {
@@ -341,7 +342,7 @@ class OptionsParser {
   friend void GetOptions(const v8::FunctionCallbackInfo<v8::Value>& args);
 };
 
-extern template class OptionsParser<DebugOptions>;
+extern template class EXPORT_TEMPLATE_DECLARE(NODE_EXTERN) OptionsParser<DebugOptions>;
 
 class NODE_EXTERN DebugOptionsParser : public OptionsParser<DebugOptions> {
  public:
