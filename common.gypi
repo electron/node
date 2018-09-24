@@ -10,6 +10,7 @@
     'component%': 'static_library',   # NB. these names match with what V8 expects
     'msvs_multi_core_compile': '0',   # we do enable multicore compiles, but not using the V8 way
     'python%': 'python',
+    'built_with_electron%': 1,
 
     'node_shared%': 'false',
     'force_dynamic_crt%': 0,
