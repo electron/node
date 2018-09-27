@@ -10,7 +10,7 @@
 
 Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine. For
 more information on using Node.js, see the
-[Node.js Website](https://http://nodejs.org/).
+[Node.js Website](https://nodejs.org/).
 
 ## Node in Electron
 
