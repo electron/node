@@ -547,13 +547,21 @@ component("node_lib") {
 
 node_headers_dir = "$root_gen_dir/node_headers/include/node"
 
-copy("node_headers") {
+copy("node_gypi") {
   deps = [
     ":generate_config_gypi",
   ]
   sources = [
     "$target_gen_dir/config.gypi",
     "common.gypi",
+  ]
+  outputs = [
+    "$node_headers_dir/{{source_file_part}}",
+  ]
+}
+
+copy("node_headers") {
+  sources = [
     "src/node.h",
     "src/node_api.h",
     "src/node_api_types.h",
@@ -639,13 +647,36 @@ copy("zlib_headers") {
   ]
 }
 
-group("headers") {
+action("tar_headers") {
+  deps = [
+    ":copy_headers"
+  ]
+
+  outputs = [
+    "$root_gen_dir/node_headers.tar.gz"
+  ]
+
+  script = "tools/tar.py"
+  args = [
+    rebase_path("$root_gen_dir/node_headers"),
+    rebase_path(outputs[0])
+  ]
+}
+
+group("copy_headers") {
   public_deps = [
+    ":node_gypi",
     ":node_headers",
     ":uv_header",
     ":uv_headers",
     ":v8_headers",
     ":v8_platform_headers",
     ":zlib_headers",
+  ]
+}
+
+group("headers") {
+  public_deps = [
+    ":tar_headers"
   ]
 }
