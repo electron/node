@@ -5,7 +5,7 @@ import sys
 def main(args):
   out = args[0]
   with open(out, 'w') as f:
-    f.write("{'variables':{}}\n")
+    f.write("{'variables':{'built_with_electron': 1}}\n")
 
 if __name__ == '__main__':
   main(sys.argv[1:])
