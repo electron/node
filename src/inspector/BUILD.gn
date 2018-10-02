@@ -96,7 +96,7 @@ template("generate_protocol_json") {
     ]
     sources = copied_pdl
     outputs = invoker.outputs
-    script = "//v8/third_party/inspector_protocol/ConvertProtocolToJSON.py"
+    script = "//v8/third_party/inspector_protocol/convert_protocol_to_json.py"
     args = rebase_path(sources + outputs, root_build_dir)
   }
 }
@@ -140,7 +140,7 @@ action("concatenate_protocols") {
   outputs = [
     "$target_gen_dir/concatenated_protocol.json",
   ]
-  script = "//v8/third_party/inspector_protocol/ConcatenateProtocols.py"
+  script = "//v8/third_party/inspector_protocol/concatenate_protocols.py"
   args = rebase_path(inputs + outputs, root_build_dir)
 }
 
