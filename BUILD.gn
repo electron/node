@@ -300,6 +300,26 @@ copy("node_gypi_headers") {
   ]
 }
 
-group("headers") {
+action("tar_headers") {
+  deps = [
+    ":copy_headers"
+  ]
+  outputs = [
+    "$root_gen_dir/node_headers.tar.gz"
+  ]
+  script = "tools/tar.py"
+  args = [
+    rebase_path("$root_gen_dir/node_headers"),
+    rebase_path(outputs[0])
+  ]
+}
+
+group("copy_headers") {
   public_deps = header_groups + [ ":zlib_headers", ":node_gypi_headers" ]
+}
+
+group("headers") {
+  public_deps = [
+    ":tar_headers"
+  ]
 }
