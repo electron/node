@@ -2826,6 +2826,14 @@ IsolateData* CreateIsolateData(
   return new IsolateData(isolate, loop, platform);
 }
 
+IsolateData* CreateIsolateData(
+    Isolate* isolate,
+    uv_loop_t* loop,
+    MultiIsolatePlatform* platform,
+    bool only_register) {
+  return new IsolateData(isolate, loop, platform, nullptr, only_register);
+}
+
 
 IsolateData* CreateIsolateData(
     Isolate* isolate,
@@ -2838,6 +2846,11 @@ IsolateData* CreateIsolateData(
 
 void FreeIsolateData(IsolateData* isolate_data) {
   delete isolate_data;
+}
+
+
+void InitializePrivatePropertiesOnIsolateData(IsolateData* data) {
+  data->InitializePrivateProperties();
 }
 
 

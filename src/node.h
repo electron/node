@@ -283,8 +283,14 @@ NODE_EXTERN IsolateData* CreateIsolateData(
     v8::Isolate* isolate,
     struct uv_loop_s* loop,
     MultiIsolatePlatform* platform,
+    bool only_register);
+NODE_EXTERN IsolateData* CreateIsolateData(
+    v8::Isolate* isolate,
+    struct uv_loop_s* loop,
+    MultiIsolatePlatform* platform,
     ArrayBufferAllocator* allocator);
 NODE_EXTERN void FreeIsolateData(IsolateData* isolate_data);
+NODE_EXTERN void InitializePrivatePropertiesOnIsolateData(IsolateData* data);
 
 // TODO(addaleax): Add an official variant using STL containers, and move
 // per-Environment options parsing here.
