@@ -36,8 +36,7 @@ void* Environment::kNodeContextTagPtr = const_cast<void*>(
 IsolateData::IsolateData(Isolate* isolate,
                          uv_loop_t* event_loop,
                          MultiIsolatePlatform* platform,
-                         uint32_t* zero_fill_field,
-                         bool only_register) :
+                         uint32_t* zero_fill_field) :
     isolate_(isolate),
     event_loop_(event_loop),
     zero_fill_field_(zero_fill_field),
@@ -46,18 +45,6 @@ IsolateData::IsolateData(Isolate* isolate,
     platform_->RegisterIsolate(this, event_loop);
 
   options_.reset(new PerIsolateOptions(*per_process_opts->per_isolate));
-
-  // The gin isolate holder expects this isolate to be usable before it is
-  // fully intialized, we register it now and the constructor becomes responsible
-  // for calling InitializePrivateProperties.  The default case remains the same.
-  if (only_register) return;
-
-  InitializePrivateProperties();
-}
-
-void IsolateData::InitializePrivateProperties() {
-  // This is too minimize the patch diff below
-  v8::Isolate *const isolate = isolate_;
 
   // Create string and private symbol properties as internalized one byte
   // strings after the platform is properly initialized.

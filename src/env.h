@@ -364,16 +364,12 @@ class IsolateData {
  public:
   IsolateData(v8::Isolate* isolate, uv_loop_t* event_loop,
               MultiIsolatePlatform* platform = nullptr,
-              uint32_t* zero_fill_field = nullptr,
-              // Indicates we should only register this data with the platform
-              // don't do any extra work like setting private properties
-              bool only_register = false);
+              uint32_t* zero_fill_field = nullptr);
   ~IsolateData();
   inline uv_loop_t* event_loop() const;
   inline uint32_t* zero_fill_field() const;
   inline MultiIsolatePlatform* platform() const;
   inline std::shared_ptr<PerIsolateOptions> options();
-  void InitializePrivateProperties();
 
 #define VP(PropertyName, StringValue) V(v8::Private, PropertyName)
 #define VY(PropertyName, StringValue) V(v8::Symbol, PropertyName)
