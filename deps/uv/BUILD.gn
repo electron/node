@@ -29,6 +29,9 @@ static_library("uv") {
 
   defines = []
 
+  # This only has an effect on Windows, where it will cause libuv's symbols to be exported in node.lib
+  defines += [ "BUILDING_UV_SHARED=1" ]
+
   cflags_c = [
     "-Wno-bitwise-op-parentheses",
     "-Wno-implicit-function-declaration",
@@ -178,11 +181,6 @@ static_library("uv") {
     sources += [
       "src/unix/bsd-ifaddrs.c",
       "src/unix/kqueue.c",
-    ]
-  }
-  if (is_component_build && is_win) {
-    defines += [
-      "BUILDING_UV_SHARED=1",
     ]
   }
 }
