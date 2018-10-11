@@ -279,6 +279,7 @@ foreach(header_group, node_files.headers) {
 
 copy("zlib_headers") {
   sources = [
+    "//third_party/zlib/names.h",
     "//third_party/zlib/zconf.h",
     "//third_party/zlib/zlib.h",
   ]
