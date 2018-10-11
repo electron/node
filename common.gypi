@@ -90,7 +90,7 @@
     # We set default values here to avoid that error message, even though these
     # aren't technically accurate, because most native modules don't depend on
     # these values being accurate.
-    'build_v8_with_gn%': 'false',
+    'build_v8_with_gn': 'false',
     'enable_lto%': 'false',
 
     'conditions': [
