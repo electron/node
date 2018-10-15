@@ -31,7 +31,7 @@ struct uv_loop_s;  // Forward declaration.
     #define NAPI_EXTERN __declspec(dllexport)
   #endif
 #else
-  #define NAPI_EXTERN /* nothing */
+  #define NAPI_EXTERN __attribute((visibility("default")))
 #endif
 
 #ifdef _WIN32
