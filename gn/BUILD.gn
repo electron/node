@@ -1,0 +1,30 @@
+config("default") {
+  asmflags = []
+  cflags = []
+  cflags_c = []
+  cflags_cc = []
+  defines = []
+  ldflags = []
+  libs = []
+
+  cflags += [
+  ]
+  cflags_cc += [
+  ]
+}
+
+config("executable") {
+  if (is_mac) {
+    ldflags = [ "-Wl,-rpath,@loader_path/." ]
+  } else if (is_linux) {
+    ldflags = [
+      "-rdynamic",
+      "-Wl,-rpath,\$ORIGIN",
+    ]
+  } else if (is_win) {
+    ldflags = [
+      "/SUBSYSTEM:CONSOLE",
+      "/INCREMENTAL:NO",
+    ]
+  }
+}

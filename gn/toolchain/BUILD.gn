@@ -1,0 +1,118 @@
+declare_args() {
+  host_ar = ar
+  host_cc = cc
+  host_cxx = cxx
+
+  cc_wrapper = ""
+}
+
+if (host_os == "win") {
+  stamp = "cmd.exe /c echo >"
+} else {
+  stamp = "touch"
+}
+
+template("gcc_like_toolchain") {
+  toolchain(target_name) {
+    ar = invoker.ar
+    cc = invoker.cc
+    cxx = invoker.cxx
+
+    lib_switch = "-l"
+    lib_dir_switch = "-L"
+
+    tool("cc") {
+      depfile = "{{output}}.d"
+      command = "$cc_wrapper $cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"
+      depsformat = "gcc"
+      outputs = [
+        "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o"
+      ]
+      description = "CC {{source}}"
+    }
+
+    tool("cxx") {
+      depfile = "{{output}}.d"
+      command = "$cc_wrapper $cxx -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
+      depsformat = "gcc"
+      outputs = [
+        "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o"
+      ]
+      description = "CXX {{source}}"
+    }
+
+    tool("alink") {
+      rspfile = "{{output}}.rsp"
+      rspfile_content = "{{inputs}}"
+      command = "$ar {{output}} $rspfile"  # TODO: skia uses a python wrapper, do we need to also?
+      outputs = [
+        "{{root_out_dir}}/{{target_output_name}}{{output_extension}}"
+      ]
+      default_output_extension = ".a"
+      output_prefix = "lib"
+      description = "AR {{output}}"
+    }
+
+    tool("solink") {
+      soname = "{{target_output_name}}{{output_extension}}"
+
+      rpath = "-Wl,-soname,$soname"
+      if (is_mac) {
+        rpath = "-Wl,-install_name,@rpath/$soname"
+      }
+
+      rspfile = "{{output}}.rsp"
+      rspfile_content = "{{inputs}}"
+      command = "$cc_wrapper $cxx -shared {{ldflags}} @$rspfile {{solibs}} {{libs}} $rpath -o {{output}}"
+      outputs = [
+        "{{root_out_dir}}/$soname"
+      ]
+      output_prefix = "lib"
+      default_output_extension = ".so"
+      description = "SOLINK {{output}}"
+    }
+
+    tool("link") {
+      rspfile = "{{output}}.rsp"
+      rspfile_content = "{{inputs}}"
+
+      command = "$cc_wrapper $cxx {{ldflags}} @$rspfile {{solibs}} {{libs}} -o {{output}}"
+      outputs = [
+        "{{root_out_dir}}/{{target_output_name}}{{output_extension}}"
+      ]
+      description = "LINK {{output}}"
+    }
+
+    tool("stamp") {
+      command = "$stamp {{output}}"
+      description = "STAMP {{output}}"
+    }
+
+    tool("copy") {
+      # TODO: copy cp.py from skia
+      command = "cp -r {{source}} {{output}}"
+      description = "COPY {{output}}"
+    }
+
+    toolchain_args = {
+      current_cpu = invoker.cpu
+      current_os = invoker.os
+    }
+  }
+}
+
+gcc_like_toolchain("gcc_like") {
+  cpu = current_cpu
+  os = current_os
+  ar = target_ar
+  cc = target_cc
+  cxx = target_cxx
+}
+
+gcc_like_toolchain("gcc_like_host") {
+  cpu = host_cpu
+  os = host_os
+  ar = host_ar
+  cc = host_cc
+  cxx = host_cxx
+}
