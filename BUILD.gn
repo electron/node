@@ -135,6 +135,7 @@ component("node_lib") {
   public_deps = [
     "deps/uv",
     "deps/v8",
+    "deps/v8:v8_maybe_snapshot",
   ]
   public_configs = [ ":node_lib_config" ]
   include_dirs = [ "src" ]
@@ -256,6 +257,13 @@ component("node_lib") {
   } else {
     defines += [ "NODE_USE_V8_PLATFORM=0" ]
   }
+}
+
+executable("node") {
+  deps = [ ":node_lib" ]
+  sources = [
+    "src/node_main.cc",
+  ]
 }
 
 ##### node_headers
