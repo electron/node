@@ -1,1 +1,8 @@
+import("//build/dotfile_settings.gni")
+
 buildconfig = "//build/config/BUILDCONFIG.gn"
+
+default_args = {
+  v8_extra_library_files = []
+  v8_experimental_extra_library_files = []
+}
