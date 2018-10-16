@@ -16,7 +16,7 @@ declare_args() {
   # Initialize v8 platform during node.js startup.
   # NB. this must be turned off in Electron, because Electron initializes the
   # v8 platform itself.
-  node_use_v8_platform = false
+  node_use_v8_platform = true
 
   # Build with DTrace support.
   node_use_dtrace = false
