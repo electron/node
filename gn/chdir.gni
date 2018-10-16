@@ -1,0 +1,29 @@
+# Run an action with a given working directory. Behaves identically to the
+# action() target type, with the exception that it changes directory before
+# running the script.
+#
+# Parameters:
+#   cwd [required]: Directory to change to before running the script.
+template("chdir_action") {
+  action(target_name) {
+    forward_variables_from(invoker,
+                           "*",
+                           [
+                             "script",
+                             "args",
+                           ])
+    assert(defined(cwd), "Need cwd in $target_name")
+    script = "//gn/run-in-dir.py"
+    if (defined(sources)) {
+      sources += [ invoker.script ]
+    } else {
+      assert(defined(inputs))
+      inputs += [ invoker.script ]
+    }
+    args = [
+      rebase_path(cwd),
+      rebase_path(invoker.script),
+    ]
+    args += invoker.args
+  }
+}

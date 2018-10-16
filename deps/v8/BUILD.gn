@@ -3166,7 +3166,7 @@ group("gn_all") {
     ":v8_fuzzers",
     ":v8_hello_world",
     ":v8_sample_process",
-    "test:gn_all",
+    #"test:gn_all",
     "tools:gn_all",
   ]
 

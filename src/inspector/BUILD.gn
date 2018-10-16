@@ -1,4 +1,4 @@
-import("//v8/gni/v8.gni")
+import("//deps/v8/gni/v8.gni")
 
 _inspector_protocol = v8_path_prefix + "/third_party/inspector_protocol"
 import("$_inspector_protocol/inspector_protocol.gni")
@@ -48,7 +48,7 @@ source_set("inspector") {
     ":protocol_generated_sources",
     ":v8_inspector_compress_protocol_json",
     "../../deps/uv",
-    "//third_party/icu:icuuc",
+    #"//third_party/icu:icuuc",
   ]
   defines = [ "NODE_WANT_INTERNALS=1" ]
   if (is_component_build) {

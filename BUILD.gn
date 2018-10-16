@@ -1,5 +1,5 @@
-import("//electron/build/asar.gni")
-import("//v8/gni/v8.gni")
+import("//gn/chdir.gni")
+import("//deps/v8/gni/v8.gni")
 
 declare_args() {
   # Enable the V8 inspector protocol for use with node.
@@ -132,11 +132,11 @@ component("node_lib") {
     "deps/http_parser",
     "deps/nghttp2",
     "deps/zlib",
-    "//v8:v8_libplatform",
+    "deps/v8:v8_libplatform",
   ]
   public_deps = [
     "deps/uv",
-    "//v8",
+    "deps/v8",
   ]
   public_configs = [ ":node_lib_config" ]
   include_dirs = [ "src" ]
@@ -233,6 +233,7 @@ component("node_lib") {
   }
 
   if (node_use_openssl) {
+    # TODO: build openssl with GN
     deps += [ "//third_party/boringssl" ]
     sources += [
       "src/node_crypto.cc",
