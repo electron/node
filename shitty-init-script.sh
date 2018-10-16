@@ -19,3 +19,5 @@ git clone https://chromium.googlesource.com/chromium/src/third_party/jinja2 thir
 
 git clone https://chromium.googlesource.com/chromium/src/third_party/markupsafe third_party/markupsafe
 (cd third_party/markupsafe && git checkout 8f45f5cfa0009d2a70589bcda0349b8cb2b72783)
+
+./tools/fetch-gn
