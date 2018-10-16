@@ -120,8 +120,6 @@ config("node_lib_config") {
   }
   if (v8_enable_i18n_support) {
     defines += [ "NODE_HAVE_I18N_SUPPORT=1" ]
-  } else {
-    defines += [ "NODE_HAVE_I18N_SUPPORT=0" ]
   }
 }
 
