@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 
+#include "v8.h"
 #include "v8config.h"  // NOLINT(build/include)
 
 namespace v8 {
@@ -466,7 +467,7 @@ class Platform {
    * since epoch. Useful for implementing |CurrentClockTimeMillis| if
    * nothing special needed.
    */
-  static double SystemClockTimeMillis();
+  V8_EXPORT static double SystemClockTimeMillis();
 };
 
 }  // namespace v8
