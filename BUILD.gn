@@ -131,7 +131,7 @@ component("node_lib") {
     "deps/cares",
     "deps/http_parser",
     "deps/nghttp2",
-    "//third_party/zlib",
+    "deps/zlib",
     "//v8:v8_libplatform",
   ]
   public_deps = [
@@ -278,9 +278,8 @@ foreach(header_group, node_files.headers) {
 
 copy("zlib_headers") {
   sources = [
-    "//third_party/zlib/names.h",
-    "//third_party/zlib/zconf.h",
-    "//third_party/zlib/zlib.h",
+    "deps/zlib/zconf.h",
+    "deps/zlib/zlib.h",
   ]
   outputs = [
     "$node_headers_dir/include/node/{{source_file_part}}",

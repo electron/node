@@ -1,0 +1,58 @@
+config("includes") {
+  include_dirs = [ "." ]
+}
+
+config("ignored_warnings") {
+  if (is_win) {
+    cflags = [
+      "/wd4131",  # old-style declarator
+      "/wd4127",  # conditional expression is constant
+      "/wd4244",  # possible loss of data on type conversion
+      "/wd4996",  # deprecated 'open'
+    ]
+  } else {
+    cflags = [
+      "-Wno-implicit-function-declaration",
+      "-Wno-shift-negative-value",
+    ]
+  }
+}
+
+source_set("zlib") {
+  sources = [
+    "adler32.c",
+    "compress.c",
+    "crc32.c",
+    "crc32.h",
+    "deflate.c",
+    "deflate.h",
+    "gzclose.c",
+    "gzguts.h",
+    "gzlib.c",
+    "gzread.c",
+    "gzwrite.c",
+    "infback.c",
+    "inffast.c",
+    "inffast.h",
+    "inffixed.h",
+    "inflate.c",
+    "inflate.h",
+    "inftrees.c",
+    "inftrees.h",
+    "trees.c",
+    "trees.h",
+    "uncompr.c",
+    "zconf.h",
+    "zlib.h",
+    "zutil.c",
+    "zutil.h",
+  ]
+
+  if (is_win) {
+    defines = [ "ZLIB_DLL" ]
+  }
+
+  configs += [ ":ignored_warnings" ]
+
+  public_configs = [ ":includes" ]
+}
