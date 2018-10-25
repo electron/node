@@ -240,10 +240,7 @@ component("node_lib") {
     ]
     defines += [
       "NODE_OPENSSL_SYSTEM_CERT_PATH=\"$node_openssl_system_ca_path\"",
-      "EVP_CTRL_AEAD_SET_IVLEN=EVP_CTRL_GCM_SET_IVLEN",
       "EVP_CTRL_CCM_SET_TAG=EVP_CTRL_GCM_SET_TAG",
-      "EVP_CTRL_AEAD_GET_TAG=EVP_CTRL_GCM_GET_TAG",
-      "EVP_CTRL_AEAD_SET_TAG=EVP_CTRL_GCM_SET_TAG",
     ]
     cflags_cc += [ "-Wno-sign-compare" ]
   }
