@@ -24,9 +24,6 @@ declare_args() {
   # Build with ETW support.
   node_use_etw = false
 
-  # Build with performance counters.
-  node_use_perfctr = false
-
   # Build JavaScript in lib/ with DCHECK macros.
   node_debug_lib = false
 
@@ -44,7 +41,6 @@ declare_args() {
 
 assert(!node_use_dtrace, "node_use_dtrace not supported in GN")
 assert(!node_use_etw, "node_use_etw not supported in GN")
-assert(!node_use_perfctr, "node_use_perfctr not supported in GN")
 
 assert(!node_enable_inspector || node_use_openssl,
        "node_enable_inspector requires node_use_openssl")
@@ -80,9 +76,6 @@ chdir_action("node_js2c") {
   macro_inputs = []
   if (!node_use_dtrace && !node_use_etw) {
     macro_inputs += [ "src/notrace_macros.py" ]
-  }
-  if (!node_use_perfctr) {
-    macro_inputs += [ "src/noperfctr_macros.py" ]
   }
   if (node_debug_lib) {
     macro_inputs += [ "tools/nodcheck_macros.py" ]
