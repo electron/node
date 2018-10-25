@@ -1,0 +1,13 @@
+config("llhttp_config") {
+  include_dirs = [ "include" ]
+}
+
+static_library("llhttp") {
+  include_dirs = [ "include" ]
+  public_configs = [ ":llhttp_config" ]
+  sources = [
+    "src/api.c",
+    "src/http.c",
+    "src/llhttp.c",
+  ]
+}

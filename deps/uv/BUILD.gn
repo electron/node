@@ -54,20 +54,22 @@ static_library("uv") {
     "include/uv/version.h",
     "src/fs-poll.c",
     "src/heap-inl.h",
+    "src/idna.c",
+    "src/idna.h",
     "src/inet.c",
     "src/queue.h",
+    "src/strscpy.c",
+    "src/strscpy.h",
     "src/threadpool.c",
     "src/timer.c",
     "src/uv-common.c",
     "src/uv-common.h",
     "src/uv-data-getter-setters.c",
-    "src/version.c"
+    "src/version.c",
   ]
 
   if (is_win) {
-    defines += [
-      "_GNU_SOURCE",
-    ]
+    defines += [ "_GNU_SOURCE" ]
     sources += [
       "include/uv/win.h",
       "src/win/async.c",
@@ -89,7 +91,6 @@ static_library("uv") {
       "src/win/process-stdio.c",
       "src/win/process.c",
       "src/win/req-inl.h",
-      "src/win/req.c",
       "src/win/signal.c",
       "src/win/snprintf.c",
       "src/win/stream-inl.h",
@@ -134,6 +135,7 @@ static_library("uv") {
       "src/unix/pipe.c",
       "src/unix/poll.c",
       "src/unix/process.c",
+      "src/unix/pthread-fixes.c",
       "src/unix/signal.c",
       "src/unix/spinlock.h",
       "src/unix/stream.c",
