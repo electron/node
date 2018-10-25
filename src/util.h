@@ -447,7 +447,7 @@ struct MallocedBuffer {
 
   inline bool is_empty() const { return data == nullptr; }
 
-  MallocedBuffer() : data(nullptr), allocator(nullptr) {}
+  MallocedBuffer() : data(nullptr), size(0), allocator(nullptr) {}
   MallocedBuffer(size_t size, v8::ArrayBuffer::Allocator* allocator)
       : size(size), allocator(allocator) {
     data = static_cast<T*>(allocator->AllocateUninitialized(size));

@@ -125,7 +125,7 @@ int StreamBase::Writev(const FunctionCallbackInfo<Value>& args) {
 
   MallocedBuffer<char> storage;
   if (storage_size > 0)
-    storage = MallocedBuffer<char>(storage_size);
+    storage = MallocedBuffer<char>(storage_size, env->isolate()->GetArrayBufferAllocator());
 
   offset = 0;
   if (!all_buffers) {
@@ -263,12 +263,12 @@ int StreamBase::WriteString(const FunctionCallbackInfo<Value>& args) {
 
   if (try_write) {
     // Copy partial data
-    data = MallocedBuffer<char>(buf.len);
+    data = MallocedBuffer<char>(buf.len, env->isolate()->GetArrayBufferAllocator());
     memcpy(data.data, buf.base, buf.len);
     data_size = buf.len;
   } else {
     // Write it
-    data = MallocedBuffer<char>(storage_size);
+    data = MallocedBuffer<char>(storage_size, env->isolate()->GetArrayBufferAllocator());
     data_size = StringBytes::Write(env->isolate(),
                                    data.data,
                                    storage_size,
