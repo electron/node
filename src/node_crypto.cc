@@ -3532,7 +3532,8 @@ void Sign::SignUpdate(const FunctionCallbackInfo<Value>& args) {
   sign->CheckThrow(err);
 }
 
-static MallocedBuffer<unsigned char> Node_SignFinal(EVPMDPointer&& mdctx,
+static MallocedBuffer<unsigned char> Node_SignFinal(Environment* env,
+                                                    EVPMDPointer&& mdctx,
                                                     const EVPKeyPointer& pkey,
                                                     int padding,
                                                     int pss_salt_len) {
@@ -3545,7 +3546,7 @@ static MallocedBuffer<unsigned char> Node_SignFinal(EVPMDPointer&& mdctx,
   int signed_sig_len = EVP_PKEY_size(pkey.get());
   CHECK_GE(signed_sig_len, 0);
   size_t sig_len = static_cast<size_t>(signed_sig_len);
-  MallocedBuffer<unsigned char> sig(sig_len);
+  MallocedBuffer<unsigned char> sig(sig_len, env->isolate()->GetArrayBufferAllocator());
 
   EVPKeyCtxPointer pkctx(EVP_PKEY_CTX_new(pkey.get(), nullptr));
   if (pkctx &&
@@ -3562,6 +3563,7 @@ static MallocedBuffer<unsigned char> Node_SignFinal(EVPMDPointer&& mdctx,
 }
 
 Sign::SignResult Sign::SignFinal(
+    Environment* env,
     const char* key_pem,
     int key_pem_len,
     const char* passphrase,
@@ -3610,7 +3612,7 @@ Sign::SignResult Sign::SignFinal(
 #endif  // NODE_FIPS_MODE
 
   MallocedBuffer<unsigned char> buffer =
-      Node_SignFinal(std::move(mdctx), pkey, padding, salt_len);
+      Node_SignFinal(env, std::move(mdctx), pkey, padding, salt_len);
   Error error = buffer.is_empty() ? kSignPrivateKey : kSignOk;
   return SignResult(error, std::move(buffer));
 }
@@ -3638,6 +3640,7 @@ void Sign::SignFinal(const FunctionCallbackInfo<Value>& args) {
   ClearErrorOnReturn clear_error_on_return;
 
   SignResult ret = sign->SignFinal(
+      env,
       buf,
       buf_len,
       len >= 2 && !args[1]->IsNull() ? *passphrase : nullptr,

@@ -529,6 +529,7 @@ class Sign : public SignBase {
   };
 
   SignResult SignFinal(
+      Environment* env,
       const char* key_pem,
       int key_pem_len,
       const char* passphrase,
