@@ -62,8 +62,8 @@
     '../../src/inspector/worker_inspector.h',
   ],
   'include_dirs': [
-    # '<(SHARED_INTERMEDIATE_DIR)/include', # for inspector
-    # '<(SHARED_INTERMEDIATE_DIR)',
+    '<(SHARED_INTERMEDIATE_DIR)/include', # for inspector
+    '<(SHARED_INTERMEDIATE_DIR)',
     '<(SHARED_INTERMEDIATE_DIR)/src', # for inspector
   ],
   'copies': [
