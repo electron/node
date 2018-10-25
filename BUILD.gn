@@ -24,9 +24,6 @@ declare_args() {
   # Build with ETW support.
   node_use_etw = false
 
-  # Build with performance counters.
-  node_use_perfctr = false
-
   # Build JavaScript in lib/ with DCHECK macros.
   node_debug_lib = false
 
@@ -44,7 +41,6 @@ declare_args() {
 
 assert(!node_use_dtrace, "node_use_dtrace not supported in GN")
 assert(!node_use_etw, "node_use_etw not supported in GN")
-assert(!node_use_perfctr, "node_use_perfctr not supported in GN")
 
 assert(!node_enable_inspector || node_use_openssl,
        "node_enable_inspector requires node_use_openssl")
@@ -80,9 +76,6 @@ chdir_action("node_js2c") {
   macro_inputs = []
   if (!node_use_dtrace && !node_use_etw) {
     macro_inputs += [ "src/notrace_macros.py" ]
-  }
-  if (!node_use_perfctr) {
-    macro_inputs += [ "src/noperfctr_macros.py" ]
   }
   if (node_debug_lib) {
     macro_inputs += [ "tools/nodcheck_macros.py" ]
@@ -130,6 +123,7 @@ component("node_lib") {
     ":node_js2c",
     "deps/cares",
     "deps/http_parser",
+    "deps/llhttp",
     "deps/nghttp2",
     "deps/zlib",
     "//v8:v8_libplatform",
@@ -228,9 +222,7 @@ component("node_lib") {
       "src/inspector_socket_server.cc",
       "src/inspector_socket_server.h",
     ]
-    deps += [
-      "src/inspector",
-    ]
+    deps += [ "src/inspector" ]
   }
 
   if (node_use_openssl) {
@@ -240,17 +232,16 @@ component("node_lib") {
       "src/node_crypto.h",
       "src/node_crypto_bio.cc",
       "src/node_crypto_bio.h",
+      "src/node_crypto_clienthello-inl.h",
       "src/node_crypto_clienthello.cc",
       "src/node_crypto_clienthello.h",
+      "src/node_crypto_groups.h",
       "src/tls_wrap.cc",
       "src/tls_wrap.h",
     ]
     defines += [
       "NODE_OPENSSL_SYSTEM_CERT_PATH=\"$node_openssl_system_ca_path\"",
-      "EVP_CTRL_AEAD_SET_IVLEN=EVP_CTRL_GCM_SET_IVLEN",
       "EVP_CTRL_CCM_SET_TAG=EVP_CTRL_GCM_SET_TAG",
-      "EVP_CTRL_AEAD_GET_TAG=EVP_CTRL_GCM_GET_TAG",
-      "EVP_CTRL_AEAD_SET_TAG=EVP_CTRL_GCM_SET_TAG",
     ]
     cflags_cc += [ "-Wno-sign-compare" ]
   }
@@ -270,7 +261,9 @@ header_groups = []
 foreach(header_group, node_files.headers) {
   copy("node_headers_${header_group_index}") {
     sources = header_group.files
-    outputs = [ "$node_headers_dir/${header_group.dest_dir}/{{source_file_part}}" ]
+    outputs = [
+      "$node_headers_dir/${header_group.dest_dir}/{{source_file_part}}",
+    ]
   }
   header_groups += [ ":node_headers_${header_group_index}" ]
   header_group_index += 1
@@ -288,37 +281,40 @@ copy("zlib_headers") {
 
 copy("node_gypi_headers") {
   deps = [
-    ":generate_config_gypi"
+    ":generate_config_gypi",
   ]
   sources = [
-    "common.gypi",
     "$target_gen_dir/config.gypi",
+    "common.gypi",
   ]
   outputs = [
-    "$node_headers_dir/include/node/{{source_file_part}}"
+    "$node_headers_dir/include/node/{{source_file_part}}",
   ]
 }
 
 action("tar_headers") {
   deps = [
-    ":copy_headers"
+    ":copy_headers",
   ]
   outputs = [
-    "$root_gen_dir/node_headers.tar.gz"
+    "$root_gen_dir/node_headers.tar.gz",
   ]
   script = "tools/tar.py"
   args = [
     rebase_path("$root_gen_dir/node_headers"),
-    rebase_path(outputs[0])
+    rebase_path(outputs[0]),
   ]
 }
 
 group("copy_headers") {
-  public_deps = header_groups + [ ":zlib_headers", ":node_gypi_headers" ]
+  public_deps = header_groups + [
+                  ":zlib_headers",
+                  ":node_gypi_headers",
+                ]
 }
 
 group("headers") {
   public_deps = [
-    ":tar_headers"
+    ":tar_headers",
   ]
 }
