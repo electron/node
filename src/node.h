@@ -108,6 +108,7 @@ namespace node {
 
 namespace tracing {
 
+class Agent;
 class TracingController;
 
 }
@@ -333,6 +334,8 @@ NODE_EXTERN Environment* GetCurrentEnvironment(v8::Local<v8::Context> context);
 // If NODE_USE_V8_PLATFORM haven't been defined when Node.js was built,
 // it returns nullptr.
 NODE_EXTERN MultiIsolatePlatform* GetMainThreadMultiIsolatePlatform();
+
+NODE_EXTERN node::tracing::Agent* CreateAgent();
 
 NODE_EXTERN MultiIsolatePlatform* CreatePlatform(
     int thread_pool_size,
