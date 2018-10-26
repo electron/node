@@ -113,6 +113,13 @@ class TracingController;
 // terminally confused when it's done in node_internals.h
 namespace node {
 
+namespace tracing {
+
+class Agent;
+class TracingController;
+
+}
+
 NODE_EXTERN v8::Local<v8::Value> ErrnoException(v8::Isolate* isolate,
                                                 int errorno,
                                                 const char* syscall = nullptr,
@@ -281,9 +288,11 @@ NODE_EXTERN Environment* GetCurrentEnvironment(v8::Local<v8::Context> context);
 // it returns nullptr.
 NODE_EXTERN MultiIsolatePlatform* GetMainThreadMultiIsolatePlatform();
 
+NODE_EXTERN node::tracing::Agent* CreateAgent();
+
 NODE_EXTERN MultiIsolatePlatform* CreatePlatform(
     int thread_pool_size,
-    v8::TracingController* tracing_controller);
+    node::tracing::TracingController* tracing_controller);
 MultiIsolatePlatform* InitializeV8Platform(int thread_pool_size);
 NODE_EXTERN void FreePlatform(MultiIsolatePlatform* platform);
 
