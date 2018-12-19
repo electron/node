@@ -52,6 +52,10 @@ if __name__ == '__main__':
       files = [f for f in files if f.endswith('.h')]
     elif any(f.startswith('deps/v8/') for f in files):
       files = [f.replace('deps/v8/', '//v8/', 1) for f in files]
+
+      # For compatibility with V8 7.1
+      if not any('libplatform' in f for f in files):
+        files += ['//v8/include/v8-internal.h']
     hs = {'files': sorted(files), 'dest_dir': dest_dir}
     out['headers'].append(hs)
 
