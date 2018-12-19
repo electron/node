@@ -186,6 +186,16 @@ namespace native_module {{
 {definitions}
 
 void NativeModuleLoader::LoadJavaScriptSource() {{
+  source_.emplace(
+      "original-fs/streams",
+      UnionBytes(internal_fs_streams_raw, arraysize(internal_fs_streams_raw))
+  );
+ 
+  source_.emplace(
+      "original-fs",
+      UnionBytes(fs_raw, arraysize(fs_raw))
+  );
+
   {initializers}
 }}
 

@@ -100,6 +100,7 @@ chdir_action("node_js2c") {
 
 config("node_lib_config") {
   include_dirs = [ "src" ]
+
   # FIXME(deepak1556): include paths should be corrected,
   # refer https://docs.google.com/presentation/d/1oxNHaVjA9Gn_rTzX6HIpJHP7nXRua_0URXxxJ3oYRq0/edit#slide=id.g71ecd450e_2_702
   cflags = [ "-Wno-microsoft-include" ]
@@ -133,6 +134,7 @@ component("node_lib") {
   ]
   public_deps = [
     "deps/uv",
+    "//electron:atom_js2c",
     "//v8",
   ]
   public_configs = [ ":node_lib_config" ]
@@ -202,6 +204,7 @@ component("node_lib") {
 
   sources = node_files.node_sources
   sources += [
+    "$root_gen_dir/atom_natives.cc",
     "$target_gen_dir/node_javascript.cc",
     "src/node_code_cache_stub.cc",
   ]
