@@ -4223,8 +4223,9 @@ void DiffieHellman::GenerateKeys(const FunctionCallbackInfo<Value>& args) {
   CHECK_GE(size, 0);
   auto* allocator = env->isolate()->GetArrayBufferAllocator();
   char* data = static_cast<char*>(allocator->AllocateUninitialized(size));
-  CHECK_EQ(size,
-           BN_bn2binpad(pub_key, reinterpret_cast<unsigned char*>(data), size));
+  CHECK_EQ(
+      size,
+      BN_bn2bin_padded(reinterpret_cast<unsigned char*>(data), size, pub_key));
   args.GetReturnValue().Set(Buffer::New(env, data, size).ToLocalChecked());
 }
 
@@ -4245,7 +4246,7 @@ void DiffieHellman::GetField(const FunctionCallbackInfo<Value>& args,
   auto* allocator = env->isolate()->GetArrayBufferAllocator();
   char* data = static_cast<char*>(allocator->AllocateUninitialized(size));
   CHECK_EQ(size,
-           BN_bn2binpad(num, reinterpret_cast<unsigned char*>(data), size));
+           BN_bn2bin_padded(reinterpret_cast<unsigned char*>(data), size, num));
   args.GetReturnValue().Set(Buffer::New(env, data, size).ToLocalChecked());
 }
 
@@ -4590,7 +4591,7 @@ void ECDH::GetPrivateKey(const FunctionCallbackInfo<Value>& args) {
   unsigned char* out =
       static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
 
-  if (size != BN_bn2binpad(b, out, size)) {
+  if (size != BN_bn2bin_padded(out, size, b)) {
     allocator->Free(out, size);
     return env->ThrowError("Failed to convert ECDH private key to Buffer");
   }
