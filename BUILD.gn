@@ -145,6 +145,7 @@ component("node_lib") {
     "-Wno-implicit-fallthrough",
     "-Wno-return-type",
     "-Wno-sometimes-uninitialized",
+    "-Wno-string-plus-int",
     "-Wno-unused-label",
     "-Wno-unused-private-field",
     "-Wno-unused-variable",
