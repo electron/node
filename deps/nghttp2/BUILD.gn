@@ -14,7 +14,10 @@ static_library("nghttp2") {
     defines += [ "HAVE_CONFIG_H" ]
   }
 
-  cflags_c = [ "-Wno-implicit-function-declaration" ]
+  cflags_c = [
+    "-Wno-implicit-function-declaration",
+    "-Wno-string-plus-int",
+  ]
 
   sources = [
     "lib/nghttp2_buf.c",
