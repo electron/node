@@ -128,10 +128,15 @@ config("node_lib_config") {
   # FIXME(deepak1556): include paths should be corrected,
   # refer https://docs.google.com/presentation/d/1oxNHaVjA9Gn_rTzX6HIpJHP7nXRua_0URXxxJ3oYRq0/edit#slide=id.g71ecd450e_2_702
   cflags = [ "-Wno-microsoft-include" ]
+
+  configs = [ ":node_features" ]
 }
 
 config("node_internal_config") {
-  visibility = [ ":*", "src/inspector:*" ]
+  visibility = [
+    ":*",
+    "src/inspector:*",
+  ]
   defines = [
     "NODE_WANT_INTERNALS=1",
     "NODE_IMPLEMENTATION",
@@ -204,10 +209,7 @@ component("node_lib") {
     "//v8",
   ]
   configs += [ ":node_internal_config" ]
-  public_configs = [
-    ":node_lib_config",
-    ":node_features",
-  ]
+  public_configs = [ ":node_lib_config" ]
   include_dirs = [ "src" ]
   libs = []
   cflags_cc = [
