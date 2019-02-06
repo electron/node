@@ -26,7 +26,7 @@ config("inspector_config") {
     "$target_gen_dir/src",
   ]
 
-  defines = [ "HAVE_INSPECTOR=1" ]
+  configs = [ "../..:node_features" ]
 }
 
 source_set("inspector") {
@@ -55,14 +55,7 @@ source_set("inspector") {
     "../../deps/uv",
     "//third_party/icu:icuuc",
   ]
-  defines = [ "NODE_WANT_INTERNALS=1" ]
-  if (is_component_build) {
-    defines += [
-      "BUILDING_V8_SHARED",
-      "BUILDING_V8_PLATFORM_SHARED",
-      "BUILDING_V8_BASE_SHARED",
-    ]
-  }
+  configs += [ "../..:node_internal_config" ]
   public_configs = [ ":inspector_config" ]
 }
 
