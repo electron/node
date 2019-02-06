@@ -98,12 +98,7 @@ chdir_action("node_js2c") {
   args += rebase_path(macro_inputs + config_gypi)
 }
 
-config("node_lib_config") {
-  include_dirs = [ "src" ]
-
-  # FIXME(deepak1556): include paths should be corrected,
-  # refer https://docs.google.com/presentation/d/1oxNHaVjA9Gn_rTzX6HIpJHP7nXRua_0URXxxJ3oYRq0/edit#slide=id.g71ecd450e_2_702
-  cflags = [ "-Wno-microsoft-include" ]
+config("node_features") {
   defines = []
   if (node_enable_inspector) {
     defines += [ "HAVE_INSPECTOR=1" ]
@@ -120,41 +115,32 @@ config("node_lib_config") {
   } else {
     defines += [ "NODE_HAVE_I18N_SUPPORT=0" ]
   }
+  if (node_use_v8_platform) {
+    defines += [ "NODE_USE_V8_PLATFORM=1" ]
+  } else {
+    defines += [ "NODE_USE_V8_PLATFORM=0" ]
+  }
 }
 
-component("node_lib") {
-  deps = [
-    ":node_js2c",
-    "deps/cares",
-    "deps/http_parser",
-    "deps/llhttp",
-    "deps/nghttp2",
-    "deps/zlib",
-    "//v8:v8_libplatform",
-  ]
-  public_deps = [
-    "deps/uv",
-    "//electron:atom_js2c",
-    "//v8",
-  ]
-  public_configs = [ ":node_lib_config" ]
+config("node_lib_config") {
   include_dirs = [ "src" ]
-  libs = []
-  cflags_cc = [
-    "-Wno-deprecated-declarations",
-    "-Wno-implicit-fallthrough",
-    "-Wno-return-type",
-    "-Wno-sometimes-uninitialized",
-    "-Wno-string-plus-int",
-    "-Wno-unused-label",
-    "-Wno-unused-private-field",
-    "-Wno-unused-variable",
+
+  # FIXME(deepak1556): include paths should be corrected,
+  # refer https://docs.google.com/presentation/d/1oxNHaVjA9Gn_rTzX6HIpJHP7nXRua_0URXxxJ3oYRq0/edit#slide=id.g71ecd450e_2_702
+  cflags = [ "-Wno-microsoft-include" ]
+
+  configs = [ ":node_features" ]
+}
+
+config("node_internal_config") {
+  visibility = [
+    ":*",
+    "src/inspector:*",
   ]
   defines = [
     "NODE_WANT_INTERNALS=1",
     "NODE_IMPLEMENTATION",
   ]
-
   if (is_component_build) {
     defines += [
       "BUILDING_V8_SHARED",
@@ -198,6 +184,44 @@ component("node_lib") {
   if (node_release_urlbase != "") {
     defines += [ "NODE_RELEASE_URLBASE=\"$node_release_urlbase\"" ]
   }
+
+  if (node_use_openssl) {
+    defines += [
+      "NODE_OPENSSL_SYSTEM_CERT_PATH=\"$node_openssl_system_ca_path\"",
+      "EVP_CTRL_CCM_SET_TAG=EVP_CTRL_GCM_SET_TAG",
+    ]
+  }
+}
+
+component("node_lib") {
+  deps = [
+    ":node_js2c",
+    "deps/cares",
+    "deps/http_parser",
+    "deps/llhttp",
+    "deps/nghttp2",
+    "deps/zlib",
+    "//v8:v8_libplatform",
+  ]
+  public_deps = [
+    "deps/uv",
+    "//electron:atom_js2c",
+    "//v8",
+  ]
+  configs += [ ":node_internal_config" ]
+  public_configs = [ ":node_lib_config" ]
+  include_dirs = [ "src" ]
+  libs = []
+  cflags_cc = [
+    "-Wno-deprecated-declarations",
+    "-Wno-implicit-fallthrough",
+    "-Wno-return-type",
+    "-Wno-sometimes-uninitialized",
+    "-Wno-string-plus-int",
+    "-Wno-unused-label",
+    "-Wno-unused-private-field",
+    "-Wno-unused-variable",
+  ]
 
   if (v8_enable_i18n_support) {
     deps += [ "//third_party/icu" ]
@@ -246,16 +270,7 @@ component("node_lib") {
       "src/tls_wrap.cc",
       "src/tls_wrap.h",
     ]
-    defines += [
-      "NODE_OPENSSL_SYSTEM_CERT_PATH=\"$node_openssl_system_ca_path\"",
-      "EVP_CTRL_CCM_SET_TAG=EVP_CTRL_GCM_SET_TAG",
-    ]
     cflags_cc += [ "-Wno-sign-compare" ]
-  }
-  if (node_use_v8_platform) {
-    defines += [ "NODE_USE_V8_PLATFORM=1" ]
-  } else {
-    defines += [ "NODE_USE_V8_PLATFORM=0" ]
   }
 }
 
