@@ -2832,7 +2832,7 @@ IsolateData* CreateIsolateData(
     uv_loop_t* loop,
     MultiIsolatePlatform* platform,
     ArrayBufferAllocator* allocator) {
-  return new IsolateData(isolate, loop, platform, allocator->zero_fill_field());
+  return new IsolateData(isolate, loop, platform, allocator);
 }
 
 
