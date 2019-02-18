@@ -127,9 +127,9 @@ int StreamBase::Writev(const FunctionCallbackInfo<Value>& args) {
     }
   }
 
-  std::unique_ptr<char[], Free> storage;
+  AllocatedBuffer storage;
   if (storage_size > 0)
-    storage = std::unique_ptr<char[], Free>(Malloc(storage_size));
+    storage = env->AllocateManaged(storage_size);
 
   offset = 0;
   if (!all_buffers) {
@@ -145,8 +145,8 @@ int StreamBase::Writev(const FunctionCallbackInfo<Value>& args) {
 
       // Write string
       CHECK_LE(offset, storage_size);
-      char* str_storage = storage.get() + offset;
-      size_t str_size = storage_size - offset;
+      char* str_storage = storage.data() + offset;
+      size_t str_size = storage.size() - offset;
 
       Local<String> string = chunk->ToString(env->context()).ToLocalChecked();
       enum encoding encoding = ParseEncoding(env->isolate(),
@@ -164,8 +164,8 @@ int StreamBase::Writev(const FunctionCallbackInfo<Value>& args) {
 
   StreamWriteResult res = Write(*bufs, count, nullptr, req_wrap_obj);
   SetWriteResultPropertiesOnWrapObject(env, req_wrap_obj, res);
-  if (res.wrap != nullptr && storage) {
-    res.wrap->SetAllocatedStorage(storage.release(), storage_size);
+  if (res.wrap != nullptr && storage_size > 0) {
+    res.wrap->SetAllocatedStorage(std::move(storage));
   }
   return res.err;
 }
@@ -265,18 +265,18 @@ int StreamBase::WriteString(const FunctionCallbackInfo<Value>& args) {
     CHECK_EQ(count, 1);
   }
 
-  std::unique_ptr<char[], Free> data;
+  AllocatedBuffer data;
 
   if (try_write) {
     // Copy partial data
-    data = std::unique_ptr<char[], Free>(Malloc(buf.len));
-    memcpy(data.get(), buf.base, buf.len);
+    data = env->AllocateManaged(buf.len);
+    memcpy(data.data(), buf.base, buf.len);
     data_size = buf.len;
   } else {
     // Write it
-    data = std::unique_ptr<char[], Free>(Malloc(storage_size));
+    data = env->AllocateManaged(storage_size);
     data_size = StringBytes::Write(env->isolate(),
-                                   data.get(),
+                                   data.data(),
                                    storage_size,
                                    string,
                                    enc);
@@ -284,7 +284,7 @@ int StreamBase::WriteString(const FunctionCallbackInfo<Value>& args) {
 
   CHECK_LE(data_size, storage_size);
 
-  buf = uv_buf_init(data.get(), data_size);
+  buf = uv_buf_init(data.data(), data_size);
 
   uv_stream_t* send_handle = nullptr;
 
@@ -302,7 +302,7 @@ int StreamBase::WriteString(const FunctionCallbackInfo<Value>& args) {
 
   SetWriteResultPropertiesOnWrapObject(env, req_wrap_obj, res);
   if (res.wrap != nullptr) {
-    res.wrap->SetAllocatedStorage(data.release(), data_size);
+    res.wrap->SetAllocatedStorage(std::move(data));
   }
 
   return res.err;
@@ -356,31 +356,30 @@ void StreamResource::ClearError() {
   // No-op
 }
 
-
-uv_buf_t StreamListener::OnStreamAlloc(size_t suggested_size) {
-  return uv_buf_init(Malloc(suggested_size), suggested_size);
+uv_buf_t EmitToJSStreamListener::OnStreamAlloc(size_t suggested_size) {
+  CHECK_NOT_NULL(stream_);
+  Environment* env = static_cast<StreamBase*>(stream_)->stream_env();
+  return env->AllocateManaged(suggested_size).release();
 }
 
-
-void EmitToJSStreamListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf) {
+void EmitToJSStreamListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf_) {
   CHECK_NOT_NULL(stream_);
   StreamBase* stream = static_cast<StreamBase*>(stream_);
   Environment* env = stream->stream_env();
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
+  AllocatedBuffer buf(env, buf_);
 
   if (nread <= 0)  {
-    free(buf.base);
     if (nread < 0)
       stream->CallJSOnreadMethod(nread, Local<Object>());
     return;
   }
 
-  CHECK_LE(static_cast<size_t>(nread), buf.len);
-  char* base = Realloc(buf.base, nread);
+  CHECK_LE(static_cast<size_t>(nread), buf.size());
+  buf.Resize(nread);
 
-  Local<Object> obj = Buffer::New(env, base, nread).ToLocalChecked();
-  stream->CallJSOnreadMethod(nread, obj);
+  stream->CallJSOnreadMethod(nread, buf.ToBuffer().ToLocalChecked());
 }
 
 

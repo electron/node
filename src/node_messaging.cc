@@ -118,6 +118,21 @@ MaybeLocal<Value> Message::Deserialize(Environment* env,
 
   // Attach all transfered ArrayBuffers to their new Isolate.
   for (uint32_t i = 0; i < array_buffer_contents_.size(); ++i) {
+    if (!env->isolate_data()->uses_node_allocator()) {
+      // We don't use Node's allocator on the receiving side, so we have
+      // to create the ArrayBuffer from a copy of the memory.
+      AllocatedBuffer buf =
+          env->AllocateManaged(array_buffer_contents_[i].size);
+      memcpy(buf.data(),
+             array_buffer_contents_[i].data,
+             array_buffer_contents_[i].size);
+      deserializer.TransferArrayBuffer(i, buf.ToArrayBuffer());
+      continue;
+    }
+
+    env->isolate_data()->node_allocator()->RegisterPointer(
+        array_buffer_contents_[i].data, array_buffer_contents_[i].size);
+
     Local<ArrayBuffer> ab =
         ArrayBuffer::New(env->isolate(),
                          array_buffer_contents_[i].release(),
@@ -266,6 +281,7 @@ Maybe<bool> Message::Serialize(Environment* env,
         // take ownership of its memory, copying the buffer will have to do.
         if (!ab->IsNeuterable() || ab->IsExternal())
           continue;
+        }
         // We simply use the array index in the `array_buffers` list as the
         // ID that we write into the serialized buffer.
         uint32_t id = array_buffers.size();
@@ -311,6 +327,11 @@ Maybe<bool> Message::Serialize(Environment* env,
     // it inaccessible in this Isolate.
     ArrayBuffer::Contents contents = ab->Externalize();
     ab->Neuter();
+
+    CHECK(env->isolate_data()->uses_node_allocator());
+    env->isolate_data()->node_allocator()->UnregisterPointer(
+        contents.Data(), contents.ByteLength());
+
     array_buffer_contents_.push_back(
         MallocedBuffer<char> { static_cast<char*>(contents.Data()),
                                contents.ByteLength() });

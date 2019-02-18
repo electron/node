@@ -55,19 +55,6 @@
   size_t length = end - start;
 
 namespace node {
-
-// if true, all Buffer and SlowBuffer instances will automatically zero-fill
-bool zero_fill_all_buffers = false;
-
-namespace {
-
-inline void* BufferMalloc(size_t length) {
-  return zero_fill_all_buffers ? node::UncheckedCalloc(length) :
-                                 node::UncheckedMalloc(length);
-}
-
-}  // namespace
-
 namespace Buffer {
 
 using v8::ArrayBuffer;
@@ -245,7 +232,7 @@ MaybeLocal<Object> New(Isolate* isolate,
   char* data = nullptr;
 
   if (length > 0) {
-    data = static_cast<char*>(BufferMalloc(length));
+    data = UncheckedMalloc(length);
 
     if (data == nullptr)
       return Local<Object>();
@@ -261,13 +248,7 @@ MaybeLocal<Object> New(Isolate* isolate,
     }
   }
 
-  Local<Object> buf;
-  if (New(isolate, data, actual).ToLocal(&buf))
-    return scope.Escape(buf);
-
-  // Object failed to be created. Clean up resources.
-  free(data);
-  return Local<Object>();
+  return scope.EscapeMaybe(New(isolate, data, actual));
 }
 
 
@@ -290,28 +271,16 @@ MaybeLocal<Object> New(Environment* env, size_t length) {
     return Local<Object>();
   }
 
-  void* data;
+  AllocatedBuffer ret(env);
   if (length > 0) {
-    data = BufferMalloc(length);
-    if (data == nullptr)
+    ret = env->AllocateManaged(length, false);
+    if (ret.data() == nullptr) {
+      THROW_ERR_MEMORY_ALLOCATION_FAILED(env);
       return Local<Object>();
-  } else {
-    data = nullptr;
+    }
   }
 
-  Local<ArrayBuffer> ab =
-    ArrayBuffer::New(env->isolate(),
-        data,
-        length,
-        ArrayBufferCreationMode::kInternalized);
-  MaybeLocal<Uint8Array> ui = Buffer::New(env, ab, 0, length);
-
-  if (ui.IsEmpty()) {
-    // Object failed to be created. Clean up resources.
-    free(data);
-  }
-
-  return scope.Escape(ui.FromMaybe(Local<Uint8Array>()));
+  return scope.EscapeMaybe(ret.ToBuffer());
 }
 
 
@@ -334,30 +303,18 @@ MaybeLocal<Object> Copy(Environment* env, const char* data, size_t length) {
     return Local<Object>();
   }
 
-  void* new_data;
+  AllocatedBuffer ret(env);
   if (length > 0) {
     CHECK_NOT_NULL(data);
-    new_data = node::UncheckedMalloc(length);
-    if (new_data == nullptr)
+    ret = env->AllocateManaged(length, false);
+    if (ret.data() == nullptr) {
+      THROW_ERR_MEMORY_ALLOCATION_FAILED(env);
       return Local<Object>();
-    memcpy(new_data, data, length);
-  } else {
-    new_data = nullptr;
+    }
+    memcpy(ret.data(), data, length);
   }
 
-  Local<ArrayBuffer> ab =
-    ArrayBuffer::New(env->isolate(),
-        new_data,
-        length,
-        ArrayBufferCreationMode::kInternalized);
-  MaybeLocal<Uint8Array> ui = Buffer::New(env, ab, 0, length);
-
-  if (ui.IsEmpty()) {
-    // Object failed to be created. Clean up resources.
-    free(new_data);
-  }
-
-  return scope.Escape(ui.FromMaybe(Local<Uint8Array>()));
+  return scope.EscapeMaybe(ret.ToBuffer());
 }
 
 
@@ -403,22 +360,42 @@ MaybeLocal<Object> New(Environment* env,
   return scope.Escape(ui.ToLocalChecked());
 }
 
-
+// Warning: This function needs `data` to be allocated with malloc() and not
+// necessarily isolate's ArrayBuffer::Allocator.
 MaybeLocal<Object> New(Isolate* isolate, char* data, size_t length) {
   EscapableHandleScope handle_scope(isolate);
   Environment* env = Environment::GetCurrent(isolate);
   CHECK_NOT_NULL(env);  // TODO(addaleax): Handle nullptr here.
   Local<Object> obj;
-  if (Buffer::New(env, data, length).ToLocal(&obj))
+  if (Buffer::New(env, data, length, true).ToLocal(&obj))
     return handle_scope.Escape(obj);
   return Local<Object>();
 }
 
-
-MaybeLocal<Object> New(Environment* env, char* data, size_t length) {
+// Warning: If this call comes through the public node_buffer.h API,
+// the contract for this function is that `data` is allocated with malloc()
+// and not necessarily isolate's ArrayBuffer::Allocator.
+MaybeLocal<Object> New(Environment* env,
+                       char* data,
+                       size_t length,
+                       bool uses_malloc) {
   if (length > 0) {
     CHECK_NOT_NULL(data);
     CHECK(length <= kMaxLength);
+  }
+
+  if (uses_malloc) {
+    if (!env->isolate_data()->uses_node_allocator()) {
+      // We don't know for sure that the allocator is malloc()-based, so we need
+      // to fall back to the FreeCallback variant.
+      auto free_callback = [](char* data, void* hint) { free(data); };
+      return New(env, data, length, free_callback, nullptr);
+    } else {
+      // This is malloc()-based, so we can acquire it into our own
+      // ArrayBufferAllocator.
+      CHECK_NOT_NULL(env->isolate_data()->node_allocator());
+      env->isolate_data()->node_allocator()->RegisterPointer(data, length);
+    }
   }
 
   Local<ArrayBuffer> ab =
@@ -1020,15 +997,13 @@ static void EncodeUtf8String(const FunctionCallbackInfo<Value>& args) {
 
   Local<String> str = args[0].As<String>();
   size_t length = str->Utf8Length(isolate);
-  char* data = node::UncheckedMalloc(length);
+  AllocatedBuffer buf = env->AllocateManaged(length);
   str->WriteUtf8(isolate,
-                 data,
+                 buf.data(),
                  -1,  // We are certain that `data` is sufficiently large
                  nullptr,
                  String::NO_NULL_TERMINATION | String::REPLACE_INVALID_UTF8);
-  auto array_buf = ArrayBuffer::New(
-      isolate, data, length, ArrayBufferCreationMode::kInternalized);
-  auto array = Uint8Array::New(array_buf, 0, length);
+  auto array = Uint8Array::New(buf.ToArrayBuffer(), 0, length);
   args.GetReturnValue().Set(array);
 }
 
@@ -1055,7 +1030,8 @@ void SetupBufferJS(const FunctionCallbackInfo<Value>& args) {
   env->SetMethod(proto, "ucs2Write", StringWrite<UCS2>);
   env->SetMethod(proto, "utf8Write", StringWrite<UTF8>);
 
-  if (auto zero_fill_field = env->isolate_data()->zero_fill_field()) {
+  if (ArrayBufferAllocator* allocator = env->isolate_data()->node_allocator()) {
+    uint32_t* zero_fill_field = allocator->zero_fill_field();
     CHECK(args[1]->IsObject());
     auto binding_object = args[1].As<Object>();
     auto array_buffer = ArrayBuffer::New(env->isolate(),
