@@ -111,6 +111,7 @@ class PerProcessOptions {
   std::string trace_event_file_pattern = "node_trace.${rotation}.log";
   int64_t v8_thread_pool_size = 4;
   bool zero_fill_all_buffers = false;
+  bool debug_arraybuffer_allocations = false;
 
   std::vector<std::string> security_reverts;
   bool print_help = false;
