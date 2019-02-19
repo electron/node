@@ -279,7 +279,8 @@ Maybe<bool> Message::Serialize(Environment* env,
         Local<ArrayBuffer> ab = entry.As<ArrayBuffer>();
         // If we cannot render the ArrayBuffer unusable in this Isolate and
         // take ownership of its memory, copying the buffer will have to do.
-        if (!ab->IsNeuterable() || ab->IsExternal())
+        if (!ab->IsNeuterable() || ab->IsExternal() ||
+            !env->isolate_data()->uses_node_allocator()) {
           continue;
         }
         // We simply use the array index in the `array_buffers` list as the
