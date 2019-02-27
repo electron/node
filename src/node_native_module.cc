@@ -23,6 +23,7 @@ NativeModuleLoader NativeModuleLoader::instance_;
 
 NativeModuleLoader::NativeModuleLoader() : config_(GetConfig()) {
   LoadJavaScriptSource();
+  LoadEmbedderJavaScriptSource();
 }
 
 NativeModuleLoader* NativeModuleLoader::GetInstance() {
