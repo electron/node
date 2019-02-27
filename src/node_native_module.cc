@@ -115,6 +115,7 @@ Local<String> NativeModuleLoader::GetConfigString(Isolate* isolate) const {
 
 NativeModuleLoader::NativeModuleLoader() : config_(GetConfig()) {
   LoadJavaScriptSource();
+  LoadEmbedderJavaScriptSource();
   LoadCodeCache();
 }
 
