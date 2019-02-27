@@ -261,9 +261,17 @@ def NormalizeFileName(filename):
     split = ['internal'] + split
   else:  # `lib/**/*.js` so drop the 'lib' part
     split = split[1:]
+  
   filename = '/'.join(split)
-  return os.path.splitext(filename)[0]
+  
+  # Electron-specific: when driving the node build from Electron, we generate
+  # config.gypi in a separate directory and pass the absolute path to js2c.
+  # This overrides the absolute path so that the variable names in the
+  # generated C are as if it was in the root node directory.
+  if filename.endswith("/config.gypi"):
+    filename = "config.gypi"
 
+  return os.path.splitext(filename)[0]
 
 def JS2C(source_files, target):
   # Process input from all *macro.py files

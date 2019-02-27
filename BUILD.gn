@@ -1,0 +1,351 @@
+import("//electron/build/asar.gni")
+import("//v8/gni/v8.gni")
+
+declare_args() {
+  # Enable the V8 inspector protocol for use with node.
+  node_enable_inspector = true
+
+  # Build node with SSL support.
+  # The variable is called "openssl" for parity with node's GYP build.
+  node_use_openssl = true
+
+  # Use the specified path to system CA (PEM format) in addition to
+  # the BoringSSL supplied CA store or compiled-in Mozilla CA copy.
+  node_openssl_system_ca_path = ""
+
+  # Initialize v8 platform during node.js startup.
+  # NB. this must be turned off in Electron, because Electron initializes the
+  # v8 platform itself.
+  node_use_v8_platform = false
+
+  # Build with DTrace support.
+  node_use_dtrace = false
+
+  # Build with ETW support.
+  node_use_etw = false
+
+  # Build JavaScript in lib/ with DCHECK macros.
+  node_debug_lib = false
+
+  # Custom build tag.
+  node_tag = ""
+
+  # V8 options to pass, see `node --v8-options` for examples
+  node_v8_options = ""
+
+  # Provide a custom URL prefix for the `process.release` properties
+  # `sourceUrl` and `headersUrl`. When compiling a release build, this will
+  # default to https://nodejs.org/download/release/')
+  node_release_urlbase = ""
+}
+
+assert(!node_use_dtrace, "node_use_dtrace not supported in GN")
+assert(!node_use_etw, "node_use_etw not supported in GN")
+
+assert(!node_enable_inspector || node_use_openssl,
+       "node_enable_inspector requires node_use_openssl")
+
+config("node_internals") {
+  defines = [ "NODE_WANT_INTERNALS=1" ]
+}
+
+node_files = read_file("filenames.json", "json")
+library_files = node_files.library_files
+
+copy("node_js2c_inputs") {
+  sources = library_files
+  outputs = [
+    "$target_gen_dir/js2c_inputs/{{source_target_relative}}",
+  ]
+}
+
+action("generate_config_gypi") {
+  outputs = [
+    "$target_gen_dir/config.gypi",
+  ]
+  script = "tools/generate_config_gypi.py"
+  args = rebase_path(outputs, root_build_dir)
+}
+
+chdir_action("node_js2c") {
+  deps = [
+    ":generate_config_gypi",
+    ":node_js2c_inputs",
+  ]
+
+  macro_inputs = []
+  if (!node_use_dtrace && !node_use_etw) {
+    macro_inputs += [ "src/notrace_macros.py" ]
+  }
+  if (node_debug_lib) {
+    macro_inputs += [ "tools/nodcheck_macros.py" ]
+  } else {
+    macro_inputs += [ "tools/dcheck_macros.py" ]
+  }
+  macro_inputs += [ "tools/check_macros.py" ]
+
+  config_gypi = [ "$target_gen_dir/config.gypi" ]
+
+  inputs = library_files + macro_inputs + config_gypi
+  outputs = [
+    "$target_gen_dir/node_javascript.cc",
+  ]
+
+  cwd = "$target_gen_dir/js2c_inputs"
+  script = "tools/js2c.py"
+  args = rebase_path(outputs)
+  args += library_files
+  args += rebase_path(macro_inputs + config_gypi)
+}
+
+config("node_features") {
+  defines = []
+  if (node_enable_inspector) {
+    defines += [ "HAVE_INSPECTOR=1" ]
+  } else {
+    defines += [ "HAVE_INSPECTOR=0" ]
+  }
+  if (node_use_openssl) {
+    defines += [ "HAVE_OPENSSL=1" ]
+  } else {
+    defines += [ "HAVE_OPENSSL=0" ]
+  }
+  if (v8_enable_i18n_support) {
+    defines += [ "NODE_HAVE_I18N_SUPPORT=1" ]
+  } else {
+    defines += [ "NODE_HAVE_I18N_SUPPORT=0" ]
+  }
+  if (node_use_v8_platform) {
+    defines += [ "NODE_USE_V8_PLATFORM=1" ]
+  } else {
+    defines += [ "NODE_USE_V8_PLATFORM=0" ]
+  }
+}
+
+config("node_lib_config") {
+  include_dirs = [ "src" ]
+
+  # FIXME(deepak1556): include paths should be corrected,
+  # refer https://docs.google.com/presentation/d/1oxNHaVjA9Gn_rTzX6HIpJHP7nXRua_0URXxxJ3oYRq0/edit#slide=id.g71ecd450e_2_702
+  cflags = [ "-Wno-microsoft-include" ]
+
+  configs = [ ":node_features" ]
+
+  if (is_debug) {
+    defines = [ "DEBUG" ]
+  }
+}
+
+config("node_internal_config") {
+  visibility = [
+    ":*",
+    "src/inspector:*",
+  ]
+  defines = [
+    "NODE_WANT_INTERNALS=1",
+    "NODE_IMPLEMENTATION",
+  ]
+  if (is_component_build) {
+    defines += [
+      "BUILDING_V8_SHARED",
+      "BUILDING_V8_PLATFORM_SHARED",
+      "BUILDING_V8_BASE_SHARED",
+      "NODE_SHARED_MODE",
+    ]
+  }
+
+  if (target_cpu == "x86") {
+    node_arch = "ia32"
+  } else {
+    node_arch = target_cpu
+  }
+  defines += [ "NODE_ARCH=\"$node_arch\"" ]
+
+  if (target_os == "win") {
+    node_platform = "win32"
+  } else if (target_os == "mac") {
+    node_platform = "darwin"
+  } else {
+    node_platform = target_os
+  }
+  defines += [ "NODE_PLATFORM=\"$node_platform\"" ]
+
+  if (is_win) {
+    defines += [
+      "NOMINMAX",
+      "_UNICODE=1",
+    ]
+  } else {
+    defines += [ "__POSIX__" ]
+  }
+
+  if (node_tag != "") {
+    defines += [ "NODE_TAG=\"$node_tag\"" ]
+  }
+  if (node_v8_options != "") {
+    defines += [ "NODE_V8_OPTIONS=\"$node_v8_options\"" ]
+  }
+  if (node_release_urlbase != "") {
+    defines += [ "NODE_RELEASE_URLBASE=\"$node_release_urlbase\"" ]
+  }
+
+  if (node_use_openssl) {
+    defines += [
+      "NODE_OPENSSL_SYSTEM_CERT_PATH=\"$node_openssl_system_ca_path\"",
+      "EVP_CTRL_CCM_SET_TAG=EVP_CTRL_GCM_SET_TAG",
+    ]
+  }
+}
+
+component("node_lib") {
+  deps = [
+    ":node_js2c",
+    "//third_party/brotli:enc",
+    "//third_party/brotli:dec",
+    "deps/cares",
+    "deps/histogram",
+    "deps/http_parser",
+    "deps/llhttp",
+    "deps/nghttp2",
+    "deps/zlib",
+    "//v8:v8_libplatform",
+  ]
+  public_deps = [
+    "deps/uv",
+    "//electron:atom_js2c",
+    "//v8",
+  ]
+  configs += [ ":node_internal_config" ]
+  public_configs = [ ":node_lib_config" ]
+  include_dirs = [ "src" ]
+  libs = []
+  cflags_cc = [
+    "-Wno-deprecated-declarations",
+    "-Wno-implicit-fallthrough",
+    "-Wno-return-type",
+    "-Wno-sometimes-uninitialized",
+    "-Wno-string-plus-int",
+    "-Wno-unused-function",
+    "-Wno-unused-label",
+    "-Wno-unused-private-field",
+    "-Wno-unused-variable",
+  ]
+
+  if (v8_enable_i18n_support) {
+    deps += [ "//third_party/icu" ]
+  }
+
+  sources = node_files.node_sources
+  sources += [
+    "$root_gen_dir/atom_natives.cc",
+    "$target_gen_dir/node_javascript.cc",
+    "src/node_code_cache_stub.cc",
+  ]
+
+  if (is_win) {
+    libs += [ "psapi.lib" ]
+  }
+  if (is_mac) {
+    libs += [ "CoreFoundation.framework" ]
+  }
+
+  if (node_enable_inspector) {
+    sources += [
+      "src/inspector_agent.cc",
+      "src/inspector_agent.h",
+      "src/inspector_io.cc",
+      "src/inspector_io.h",
+      "src/inspector_profiler.cc",
+      "src/inspector_js_api.cc",
+      "src/inspector_socket.cc",
+      "src/inspector_socket.h",
+      "src/inspector_socket_server.cc",
+      "src/inspector_socket_server.h",
+    ]
+    deps += [ "src/inspector" ]
+  }
+
+  if (node_use_openssl) {
+    deps += [ "//third_party/boringssl" ]
+    sources += [
+      "src/node_crypto.cc",
+      "src/node_crypto.h",
+      "src/node_crypto_bio.cc",
+      "src/node_crypto_bio.h",
+      "src/node_crypto_clienthello-inl.h",
+      "src/node_crypto_clienthello.cc",
+      "src/node_crypto_clienthello.h",
+      "src/node_crypto_groups.h",
+      "src/tls_wrap.cc",
+      "src/tls_wrap.h",
+    ]
+    cflags_cc += [ "-Wno-sign-compare" ]
+  }
+}
+
+##### node_headers
+
+node_headers_dir = "$root_gen_dir/node_headers"
+
+header_group_index = 0
+header_groups = []
+foreach(header_group, node_files.headers) {
+  copy("node_headers_${header_group_index}") {
+    sources = header_group.files
+    outputs = [
+      "$node_headers_dir/${header_group.dest_dir}/{{source_file_part}}",
+    ]
+  }
+  header_groups += [ ":node_headers_${header_group_index}" ]
+  header_group_index += 1
+}
+
+copy("zlib_headers") {
+  sources = [
+    "deps/zlib/zconf.h",
+    "deps/zlib/zlib.h",
+  ]
+  outputs = [
+    "$node_headers_dir/include/node/{{source_file_part}}",
+  ]
+}
+
+copy("node_gypi_headers") {
+  deps = [
+    ":generate_config_gypi",
+  ]
+  sources = [
+    "$target_gen_dir/config.gypi",
+    "common.gypi",
+  ]
+  outputs = [
+    "$node_headers_dir/include/node/{{source_file_part}}",
+  ]
+}
+
+action("tar_headers") {
+  deps = [
+    ":copy_headers",
+  ]
+  outputs = [
+    "$root_gen_dir/node_headers.tar.gz",
+  ]
+  script = "tools/tar.py"
+  args = [
+    rebase_path("$root_gen_dir/node_headers"),
+    rebase_path(outputs[0]),
+  ]
+}
+
+group("copy_headers") {
+  public_deps = header_groups + [
+                  ":zlib_headers",
+                  ":node_gypi_headers",
+                ]
+}
+
+group("headers") {
+  public_deps = [
+    ":tar_headers",
+  ]
+}

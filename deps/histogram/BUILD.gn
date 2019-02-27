@@ -1,0 +1,17 @@
+config("histogram_config") {
+  include_dirs = [ "src" ]
+
+  cflags = [
+    "-Wno-implicit-function-declaration",
+    "-Wno-incompatible-pointer-types",
+  ]
+}
+
+static_library("histogram") {
+  public_configs = [ ":histogram_config" ]
+
+  sources = [
+    "src/hdr_histogram.c",
+    "src/hdr_histogram.h",
+  ]
+}
