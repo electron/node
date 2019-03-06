@@ -56,7 +56,7 @@ void GetInternalBinding(const v8::FunctionCallbackInfo<v8::Value>& args);
 void GetLinkedBinding(const v8::FunctionCallbackInfo<v8::Value>& args);
 void DLOpen(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-NODE_EXTERN node_module* get_builtin_module(const char *name);
+NODE_EXTERN node_module* get_linked_module(const char *name);
 
 }  // namespace binding
 
