@@ -3476,7 +3476,7 @@ static ManagedEVPPKey GetPublicOrPrivateKeyFromJs(
           is_public = false;
           break;
         default:
-          UNREACHABLE("Invalid key encoding type");
+          CHECK(false);
       }
 
       if (is_public) {
