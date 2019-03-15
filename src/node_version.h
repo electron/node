@@ -115,7 +115,7 @@
  *
  * More information can be found at https://nodejs.org/en/download/releases/
  */
-#define NODE_MODULE_VERSION 68
+#define NODE_MODULE_VERSION 70
 
 // the NAPI_VERSION provided by this version of the runtime
 #define NAPI_VERSION  3
