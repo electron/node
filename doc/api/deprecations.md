@@ -160,7 +160,7 @@ outside `node_modules` in order to better target developers, rather than users.
 ### DEP0006: child\_process options.customFds
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25279
     description: End-of-Life.
   - version:
@@ -513,7 +513,7 @@ The `os.tmpDir()` API is deprecated. Please use [`os.tmpdir()`][] instead.
 ### DEP0023: os.getNetworkInterfaces()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25280
     description: End-of-Life.
   - version:
@@ -569,7 +569,7 @@ The `sys` module is deprecated. Please use the [`util`][] module instead.
 ### DEP0026: util.print()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25377
     description: End-of-Life.
   - version:
@@ -590,7 +590,7 @@ Type: End-of-Life
 ### DEP0027: util.puts()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25377
     description: End-of-Life.
   - version:
@@ -611,7 +611,7 @@ Type: End-of-Life
 ### DEP0028: util.debug()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25377
     description: End-of-Life.
   - version:
@@ -632,7 +632,7 @@ Type: End-of-Life
 ### DEP0029: util.error()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25377
     description: End-of-Life.
   - version:
@@ -1279,7 +1279,7 @@ changes:
   - version: v8.0.0
     pr-url: https://github.com/nodejs/node/pull/10970
     description: Runtime deprecation.
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25828
     description: End-of-Life.
 -->
@@ -1362,7 +1362,7 @@ removed. Please use `sloppy` instead.
 ### DEP0066: outgoingMessage.\_headers, outgoingMessage.\_headerNames
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/24167
     description: Runtime deprecation.
   - version: v8.0.0
@@ -1688,7 +1688,7 @@ the client and is now unsupported. Use the `ciphers` parameter instead.
 ### DEP0084: requiring bundled internal dependencies
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25138
     description: This functionality has been removed.
   - version: v10.0.0
@@ -1905,7 +1905,7 @@ should start using the `async_context` variant of `MakeCallback` or
 ### DEP0098: AsyncHooks Embedder AsyncResource.emitBefore and AsyncResource.emitAfter APIs
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/26530
     description: End-of-Life
   - version:
@@ -2168,7 +2168,7 @@ accessed outside of Node.js core: `Socket.prototype._handle`,
 ### DEP0113: Cipher.setAuthTag(), Decipher.getAuthTag()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/26249
     description: End-of-Life.
   - version: v11.0.0
@@ -2185,7 +2185,7 @@ were never documented and would throw when called.
 ### DEP0114: crypto._toBuf()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25338
     description: End-of-Life.
   - version: v11.0.0
@@ -2284,7 +2284,7 @@ Type: Documentation-only (supports [`--pending-deprecation`][])
 ### DEP0120: Windows Performance Counter Support
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/24862
     description: End-of-Life.
   - version: v11.0.0
@@ -2304,7 +2304,7 @@ undocumented `COUNTER_NET_SERVER_CONNECTION()`,
 ### DEP0121: net._setSimultaneousAccepts()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/23760
     description: Runtime deprecation.
 -->
@@ -2319,7 +2319,7 @@ https://github.com/nodejs/node/issues/18391
 ### DEP0122: tls Server.prototype.setOptions()
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/23820
     description: Runtime deprecation.
 -->
@@ -2332,7 +2332,7 @@ Please use `Server.prototype.setSecureContext()` instead.
 ### DEP0123: setting the TLS ServerName to an IP address
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/23329
     description: Runtime deprecation.
 -->
@@ -2346,7 +2346,7 @@ Setting the TLS ServerName to an IP address is not permitted by
 ### DEP0124: using REPLServer.rli
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/26260
     description: Runtime deprecation.
 -->
@@ -2359,7 +2359,7 @@ This property is a reference to the instance itself.
 ### DEP0125: require('\_stream\_wrap')
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/26245
     description: Runtime deprecation.
 -->

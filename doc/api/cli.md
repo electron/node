@@ -479,7 +479,7 @@ with crypto support (default).
 
 ### `--tls-max-v1.2`
 <!-- YAML
-added: REPLACEME
+added: v12.0.0
 -->
 
 Set [`tls.DEFAULT_MAX_VERSION`][] to 'TLSv1.2'. Use to disable support for
@@ -487,7 +487,7 @@ TLSv1.3.
 
 ### `--tls-max-v1.3`
 <!-- YAML
-added: REPLACEME
+added: v12.0.0
 -->
 
 Set default [`tls.DEFAULT_MAX_VERSION`][] to 'TLSv1.3'. Use to enable support
@@ -495,7 +495,7 @@ for TLSv1.3.
 
 ### `--tls-min-v1.0`
 <!-- YAML
-added: REPLACEME
+added: v12.0.0
 -->
 
 Set default [`tls.DEFAULT_MIN_VERSION`][] to 'TLSv1'. Use for compatibility with
@@ -503,7 +503,7 @@ old TLS clients or servers.
 
 ### `--tls-min-v1.1`
 <!-- YAML
-added: REPLACEME
+added: v12.0.0
 -->
 
 Set default [`tls.DEFAULT_MIN_VERSION`][] to 'TLSv1.1'. Use for compatibility
@@ -511,7 +511,7 @@ with old TLS clients or servers.
 
 ### `--tls-min-v1.3`
 <!-- YAML
-added: REPLACEME
+added: v12.0.0
 -->
 
 Set default [`tls.DEFAULT_MIN_VERSION`][] to 'TLSv1.3'. Use to disable support

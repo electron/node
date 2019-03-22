@@ -1998,7 +1998,7 @@ an `Error` with this code will be emitted.
 ### MODULE_NOT_FOUND
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v12.0.0
     pr-url: https://github.com/nodejs/node/pull/25690
     description: Added `requireStack` property.
 -->
