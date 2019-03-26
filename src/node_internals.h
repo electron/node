@@ -348,10 +348,11 @@ class TraceEventScope {
   TraceEventScope(const char* category,
                   const char* name,
                   void* id) : category_(category), name_(name), id_(id) {
-    TRACE_EVENT_NESTABLE_ASYNC_BEGIN0(category_, name_, id_);
+    // TRACE_EVENT_NESTABLE_ASYNC_BEGIN0(category_, name_, id_);
+    (void) category_; (void)name_; (void)id_;
   }
   ~TraceEventScope() {
-    TRACE_EVENT_NESTABLE_ASYNC_END0(category_, name_, id_);
+    // TRACE_EVENT_NESTABLE_ASYNC_END0(category_, name_, id_);
   }
 
  private:
