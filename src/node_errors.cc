@@ -230,13 +230,13 @@ void AppendExceptionLine(Environment* env,
             .FromMaybe(false));
 }
 
-[[noreturn]] void Abort() {
+[[noreturn]] void NODE_EXTERN Abort() {
   DumpBacktrace(stderr);
   fflush(stderr);
   ABORT_NO_BACKTRACE();
 }
 
-[[noreturn]] void Assert(const AssertionInfo& info) {
+[[noreturn]] void NODE_EXTERN Assert(const AssertionInfo& info) {
   char name[1024];
   GetHumanReadableProcessName(&name);
 
