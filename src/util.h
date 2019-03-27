@@ -24,6 +24,8 @@
 
 #if defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS
 
+
+#include "node.h"
 #include "v8.h"
 
 #include <cassert>
@@ -103,8 +105,8 @@ struct AssertionInfo {
   const char* message;
   const char* function;
 };
-[[noreturn]] void Assert(const AssertionInfo& info);
-[[noreturn]] void Abort();
+[[noreturn]] void NODE_EXTERN Assert(const AssertionInfo& info);
+[[noreturn]] void NODE_EXTERN Abort();
 void DumpBacktrace(FILE* fp);
 
 // Windows 8+ does not like abort() in Release mode
