@@ -272,6 +272,24 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
   return scope.Escape(fun);
 }
 
+MaybeLocal<Value> NativeModuleLoader::CompileAndCall(
+    Local<Context> context,
+    const char* id,
+    std::vector<Local<String>>* parameters,
+    std::vector<Local<Value>>* arguments,
+    Environment* optional_env) {
+  Isolate* isolate = context->GetIsolate();
+  MaybeLocal<Function> compiled =
+      per_process::native_module_loader.LookupAndCompile(
+          context, id, parameters, nullptr);
+  if (compiled.IsEmpty()) {
+    return MaybeLocal<Value>();
+  }
+  Local<Function> fn = compiled.ToLocalChecked().As<Function>();
+  return fn->Call(
+      context, v8::Null(isolate), arguments->size(), arguments->data());
+}
+
 void NativeModuleLoader::Initialize(Local<Object> target,
                                     Local<Value> unused,
                                     Local<Context> context,
