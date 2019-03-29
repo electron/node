@@ -290,24 +290,14 @@ Maybe<bool> Decorate(Environment* env, Local<Object> obj,
     V(BIO)                                                                    \
     V(PKCS7)                                                                  \
     V(X509V3)                                                                 \
-    V(PKCS12)                                                                 \
     V(RAND)                                                                   \
-    V(DSO)                                                                    \
     V(ENGINE)                                                                 \
     V(OCSP)                                                                   \
     V(UI)                                                                     \
     V(COMP)                                                                   \
     V(ECDSA)                                                                  \
     V(ECDH)                                                                   \
-    V(OSSL_STORE)                                                             \
-    V(FIPS)                                                                   \
-    V(CMS)                                                                    \
-    V(TS)                                                                     \
     V(HMAC)                                                                   \
-    V(CT)                                                                     \
-    V(ASYNC)                                                                  \
-    V(KDF)                                                                    \
-    V(SM2)                                                                    \
     V(USER)                                                                   \
 
 #define V(name) case ERR_LIB_##name: lib = #name "_"; break;
@@ -2487,8 +2477,11 @@ void SSLWrap<Base>::GetEphemeralKeyInfo(
             .Check();
         break;
       case EVP_PKEY_EC:
+      // FIXME(zcbenz): This is not available in BoringSSL.
+#if 0
       case EVP_PKEY_X25519:
       case EVP_PKEY_X448:
+#endif
         {
           const char* curve_name;
           if (kid == EVP_PKEY_EC) {
@@ -3742,12 +3735,15 @@ Local<Value> KeyObject::GetAsymmetricKeyType() const {
     return env()->crypto_ec_string();
   case EVP_PKEY_ED25519:
     return env()->crypto_ed25519_string();
+  // FIXME(zcbenz): This is not available in BoringSSL.
+#if 0
   case EVP_PKEY_ED448:
     return env()->crypto_ed448_string();
   case EVP_PKEY_X25519:
     return env()->crypto_x25519_string();
   case EVP_PKEY_X448:
     return env()->crypto_x448_string();
+#endif
   default:
     return Undefined(env()->isolate());
   }
@@ -6196,6 +6192,8 @@ class DSAKeyPairGenerationConfig : public KeyPairGenerationConfig {
     if (EVP_PKEY_paramgen_init(param_ctx.get()) <= 0)
       return nullptr;
 
+    // FIXME(zcbenz): This is not available in BoringSSL.
+#if 0
     if (EVP_PKEY_CTX_set_dsa_paramgen_bits(param_ctx.get(), modulus_bits_) <= 0)
       return nullptr;
 
@@ -6215,6 +6213,8 @@ class DSAKeyPairGenerationConfig : public KeyPairGenerationConfig {
 
     EVPKeyCtxPointer key_ctx(EVP_PKEY_CTX_new(params.get(), nullptr));
     return key_ctx;
+#endif
+    return nullptr;
   }
 
  private:
@@ -6906,9 +6906,12 @@ void Initialize(Local<Object> target,
   env->SetMethod(target, "generateKeyPairEC", GenerateKeyPairEC);
   env->SetMethod(target, "generateKeyPairNid", GenerateKeyPairNid);
   NODE_DEFINE_CONSTANT(target, EVP_PKEY_ED25519);
+  // FIXME(zcbenz): This is not available in BoringSSL.
+#if 0
   NODE_DEFINE_CONSTANT(target, EVP_PKEY_ED448);
   NODE_DEFINE_CONSTANT(target, EVP_PKEY_X25519);
   NODE_DEFINE_CONSTANT(target, EVP_PKEY_X448);
+#endif
   NODE_DEFINE_CONSTANT(target, OPENSSL_EC_NAMED_CURVE);
   NODE_DEFINE_CONSTANT(target, OPENSSL_EC_EXPLICIT_CURVE);
   NODE_DEFINE_CONSTANT(target, kKeyEncodingPKCS1);
