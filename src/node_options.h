@@ -56,11 +56,11 @@ class Options {
 // per-Isolate, rather than per-Environment.
 class NODE_EXTERN DebugOptions : public Options {
  public:
-  DebugOptions() = default;
-  DebugOptions(const DebugOptions&) = default;
-  DebugOptions& operator=(const DebugOptions&) = default;
-  DebugOptions(DebugOptions&&) = default;
-  DebugOptions& operator=(DebugOptions&&) = default;
+  DebugOptions();
+  DebugOptions(const DebugOptions&);
+  DebugOptions& operator=(const DebugOptions&);
+  DebugOptions(DebugOptions&&);
+  DebugOptions& operator=(DebugOptions&&);
 
   // --inspect
   bool inspector_enabled = false;
