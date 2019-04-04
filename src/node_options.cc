@@ -33,7 +33,7 @@ DebugOptions& DebugOptions::operator=(const DebugOptions&) = default;
 DebugOptions& DebugOptions::operator=(DebugOptions&&) = default;
 
 void DebugOptions::CheckOptions(std::vector<std::string>* errors) {
-#if !NODE_USE_V8_PLATFORM
+#if 0
   if (inspector_enabled) {
     errors->push_back("Inspector is not available when Node is compiled "
                       "--without-v8-platform");
