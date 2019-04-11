@@ -54,7 +54,7 @@ class Options {
 // to keep them separate since they are a group of options applying to a very
 // specific part of Node. It might also make more sense for them to be
 // per-Isolate, rather than per-Environment.
-class DebugOptions : public Options {
+class NODE_EXTERN DebugOptions : public Options {
  public:
   DebugOptions() = default;
   DebugOptions(const DebugOptions&) = default;
@@ -227,7 +227,7 @@ class PerProcessOptions : public Options {
 
 namespace options_parser {
 
-HostPort SplitHostPort(const std::string& arg,
+HostPort NODE_EXTERN SplitHostPort(const std::string& arg,
     std::vector<std::string>* errors);
 void GetOptions(const v8::FunctionCallbackInfo<v8::Value>& args);
 
@@ -418,6 +418,11 @@ class OptionsParser {
   friend class OptionsParser;
 
   friend void GetOptions(const v8::FunctionCallbackInfo<v8::Value>& args);
+};
+
+class NODE_EXTERN DebugOptionsParser : public OptionsParser<DebugOptions> {
+ public:
+  DebugOptionsParser();
 };
 
 using StringVector = std::vector<std::string>;
