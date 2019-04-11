@@ -283,6 +283,16 @@ def JS2C(source_files, target):
 
   for filename in source_files['.js']:
     AddModule(filename, consts, macros, definitions, initializers)
+    # Electron: Expose fs module without asar support.
+    if name == 'fs.js':
+      # Node's 'fs' and 'internal/fs/streams' have a lazy-loaded circular
+      # dependency. So to expose the unmodified Node 'fs' functionality here,
+      # we have to copy both 'fs' *and* 'internal/fs/streams' and modify the
+      # copies to depend on each other instead of on our asarified 'fs' code.
+      # See https://github.com/electron/electron/pull/16028 for more.
+      AddModule('original-fs', lines.replace("require('internal/fs/streams')", "require('original-fs/streams')"))
+    elif name == 'internal/fs/streams.js':
+      AddModule('original-fs/streams', lines.replace("require('fs')", "require('original-fs')"))
 
   config_def, config_size = handle_config_gypi(source_files['config.gypi'])
   definitions.append(config_def)
