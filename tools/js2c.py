@@ -287,6 +287,16 @@ def JS2C(source, target):
       definitions.append(definition)
     else:
       AddModule(name.split('.', 1)[0], lines)
+      # Electron: Expose fs module without asar support.
+      if name == 'fs.js':
+        # Node's 'fs' and 'internal/fs/streams' have a lazy-loaded circular
+        # dependency. So to expose the unmodified Node 'fs' functionality here,
+        # we have to copy both 'fs' *and* 'internal/fs/streams' and modify the
+        # copies to depend on each other instead of on our asarified 'fs' code.
+        # See https://github.com/electron/electron/pull/16028 for more.
+        AddModule('original-fs', lines.replace("require('internal/fs/streams')", "require('original-fs/streams')"))
+      elif name == 'internal/fs/streams.js':
+        AddModule('original-fs/streams', lines.replace("require('fs')", "require('original-fs')"))
 
   # Emit result
   output = open(str(target[0]), "w")
