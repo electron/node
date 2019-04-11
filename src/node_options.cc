@@ -148,11 +148,6 @@ void EnvironmentOptions::CheckOptions(std::vector<std::string>* errors) {
 
 namespace options_parser {
 
-class DebugOptionsParser : public OptionsParser<DebugOptions> {
- public:
-  DebugOptionsParser();
-};
-
 class EnvironmentOptionsParser : public OptionsParser<EnvironmentOptions> {
  public:
   EnvironmentOptionsParser();
