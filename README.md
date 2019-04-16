@@ -39,4 +39,4 @@ To make changes to Node for a specific version of Electron, see `electron/vendor
 [node20x]: https://github.com/electron/node/tree/electron-node-v8.9.3
 [node30x]: https://github.com/electron/node/tree/electron-node-v10.2.0
 [node40x]: https://github.com/electron/node/tree/electron-node-v10.11.0-V8-6.9
-[node50x]: https://github.com/electron/node/tree/electron-node-canary
+[node50x]: https://github.com/electron/node/tree/electron-node-v12.x
