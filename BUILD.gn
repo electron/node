@@ -37,6 +37,9 @@ declare_args() {
   # `sourceUrl` and `headersUrl`. When compiling a release build, this will
   # default to https://nodejs.org/download/release/')
   node_release_urlbase = ""
+
+  # Allows embedders to override the NODE_MODULE_VERSION define
+  node_module_version = ""
 }
 
 assert(!node_use_dtrace, "node_use_dtrace not supported in GN")
@@ -145,6 +148,9 @@ config("node_internal_config") {
     "NODE_WANT_INTERNALS=1",
     "NODE_IMPLEMENTATION",
   ]
+  if (node_module_version != "") {
+    defines += [ "NODE_MODULE_VERSION=" + node_module_version ]
+  }
   if (is_component_build) {
     defines += [
       "BUILDING_V8_SHARED",
@@ -200,14 +206,14 @@ config("node_internal_config") {
 component("node_lib") {
   deps = [
     ":node_js2c",
-    "//third_party/brotli:enc",
-    "//third_party/brotli:dec",
     "deps/cares",
     "deps/histogram",
     "deps/http_parser",
     "deps/llhttp",
     "deps/nghttp2",
     "deps/zlib",
+    "//third_party/brotli:dec",
+    "//third_party/brotli:enc",
     "//v8:v8_libplatform",
   ]
   public_deps = [
@@ -255,8 +261,8 @@ component("node_lib") {
       "src/inspector_agent.h",
       "src/inspector_io.cc",
       "src/inspector_io.h",
-      "src/inspector_profiler.cc",
       "src/inspector_js_api.cc",
+      "src/inspector_profiler.cc",
       "src/inspector_socket.cc",
       "src/inspector_socket.h",
       "src/inspector_socket_server.cc",
@@ -323,6 +329,20 @@ copy("node_gypi_headers") {
   ]
 }
 
+action("node_version_header") {
+  inputs = [
+    "src/node_version.h",
+  ]
+  outputs = [
+    "$node_headers_dir/include/node/node_version.h",
+  ]
+  script = "tools/generate_node_version_header.py"
+  args = [ rebase_path("src/node_version.h"), rebase_path(outputs[0]) ]
+  if (node_module_version != "") {
+    args += [ "$node_module_version" ]
+  }
+}
+
 action("tar_headers") {
   deps = [
     ":copy_headers",
@@ -341,6 +361,7 @@ group("copy_headers") {
   public_deps = header_groups + [
                   ":zlib_headers",
                   ":node_gypi_headers",
+                  ":node_version_header",
                 ]
 }
 

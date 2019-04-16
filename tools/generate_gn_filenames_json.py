@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
   def add_headers(files, dest_dir):
     if 'src/node.h' in files:
-      files = [f for f in files if f.endswith('.h')]
+      files = [f for f in files if f.endswith('.h') and f != 'src/node_version.h']
     elif any(f.startswith('deps/v8/') for f in files):
       files = [f.replace('deps/v8/', '//v8/', 1) for f in files]
     hs = {'files': sorted(files), 'dest_dir': dest_dir}
