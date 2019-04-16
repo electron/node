@@ -117,7 +117,10 @@
  *
  * More information can be found at https://nodejs.org/en/download/releases/
  */
+// Electron sets NODE_MODULE_VERSION in their GN configuration
+#ifndef NODE_MODULE_VERSION
 #define NODE_MODULE_VERSION 72
+#endif
 
 // the NAPI_VERSION provided by this version of the runtime
 #define NAPI_VERSION  4
