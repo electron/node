@@ -756,6 +756,15 @@ class Environment {
               uint64_t thread_id = kNoThreadId);
   ~Environment();
 
+  void ForceOnlyContextAwareNativeModules() {
+    force_context_aware_ = true;
+  }
+  void WarnNonContextAwareNativeModules() {
+    warn_non_context_aware_ = true;
+  }
+  bool force_context_aware() { return force_context_aware_; }
+  bool warn_non_context_aware() { return warn_non_context_aware_; }
+
   void InitializeLibuv(bool start_profiler_idle_notifier);
   v8::MaybeLocal<v8::Object> ProcessCliArgs(
       const std::vector<std::string>& args,
@@ -1084,6 +1093,9 @@ class Environment {
 
   inline void ThrowError(v8::Local<v8::Value> (*fun)(v8::Local<v8::String>),
                          const char* errmsg);
+
+  bool force_context_aware_ = false;
+  bool warn_non_context_aware_ = false;
 
   ExecutionMode execution_mode_ = ExecutionMode::kDefault;
   std::list<binding::DLib> loaded_addons_;
