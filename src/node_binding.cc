@@ -2,6 +2,7 @@
 #include <atomic>
 #include "env-inl.h"
 #include "node_native_module_env.h"
+#include "node_process.h"
 #include "util.h"
 
 #if HAVE_OPENSSL
@@ -470,6 +471,13 @@ void DLOpen(const FunctionCallbackInfo<Value>& args) {
     }
 
     if (mp != nullptr) {
+      if (mp->nm_context_register_func == nullptr) {
+        if (env->force_context_aware()) {
+          env->ThrowError("Loading non context-aware native modules has been disabled in this process.  This means you have loaded a non context-aware native module with app.allowRendererProcessReuse set to true. See https://github.com/electron/electron/issues/18397 for more information");
+        } else if (env->warn_non_context_aware()) {
+          ProcessEmitWarningGeneric(env, "Loading non context-aware native modules in the renderer process is deprecated and will stop working at some point in the future, please see https://github.com/electron/electron/issues/18397 for more information", "Electron");
+        }
+      }
       mp->nm_dso_handle = dlib->handle_;
       dlib->SaveInGlobalHandleMap(mp);
     } else {
