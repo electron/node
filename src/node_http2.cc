@@ -1702,7 +1702,7 @@ void Http2Session::OnStreamRead(ssize_t nread, const uv_buf_t& buf_) {
     // Shrink to the actual amount of used data.
     buf.Resize(nread);
 
-    IncrementCurrentSessionMemory(buf.size());
+    IncrementCurrentSessionMemory(nread);
 
     // Makre sure that there was no read previously active.
     CHECK_NULL(stream_buf_.base);
@@ -1735,7 +1735,7 @@ void Http2Session::OnStreamRead(ssize_t nread, const uv_buf_t& buf_) {
 
   // Since we are finished handling this write, reset the stream buffer.
   // The memory has either been free()d or was handed over to V8.
-  DecrementCurrentSessionMemory(buf.size());
+  DecrementCurrentSessionMemory(nread);
 
   stream_buf_ab_ = Local<ArrayBuffer>();
   stream_buf_ = uv_buf_init(nullptr, 0);
