@@ -286,7 +286,7 @@ MaybeLocal<Value> RunBootstrapping(Environment* env) {
   };
 
 #if HAVE_INSPECTOR
-  if (env->options()->debug_options().break_node_first_line) {
+  if (env->inspector_agent()->options().break_node_first_line) {
     env->inspector_agent()->PauseOnNextJavascriptStatement(
         "Break at bootstrap");
   }
