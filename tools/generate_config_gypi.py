@@ -2,10 +2,16 @@
 # the js2c'd config.gypi.
 import sys
 
-def main(args):
-  out = args[0]
+def main(out, target_os):
+  config = {
+    'variables': {
+      'built_with_electron': 1,
+    }
+  }
+  if target_os == 'win':
+    config['variables']['node_with_ltcg'] = 'true'
   with open(out, 'w') as f:
-    f.write("{'variables':{'built_with_electron': 1}}\n")
+    f.write(repr(config) + "\n")
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  main(*sys.argv[1:])
