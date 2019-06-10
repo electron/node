@@ -67,7 +67,7 @@ action("generate_config_gypi") {
     "$target_gen_dir/config.gypi",
   ]
   script = "tools/generate_config_gypi.py"
-  args = rebase_path(outputs, root_build_dir)
+  args = rebase_path(outputs, root_build_dir) + [ target_os ]
 }
 
 chdir_action("node_js2c") {
