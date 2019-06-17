@@ -80,8 +80,10 @@ Metadata::Versions::Versions() {
     "." +
     std::to_string(BrotliEncoderVersion() & 0xFFF);
 
-#if HAVE_OPENSSL
+#if HAVE_OPENSSL && defined(OPENSSL_IS_BORINGSSL)
   boringssl = GetOpenSSLVersion();
+#elif HAVE_OPENSSL
+  openssl = GetOpenSSLVersion();
 #endif
 
 #ifdef NODE_HAVE_I18N_SUPPORT

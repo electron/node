@@ -33,8 +33,10 @@ namespace node {
   V(llhttp)                                                                    \
   V(http_parser)                                                               \
 
-#if HAVE_OPENSSL
+#if HAVE_OPENSSL && defined(OPENSSL_IS_BORINGSSL)
 #define NODE_VERSIONS_KEY_CRYPTO(V) V(boringssl)
+#elif HAVE_OPENSSL
+#define NODE_VERSIONS_KEY_CRYPTO(V) V(openssl)
 #else
 #define NODE_VERSIONS_KEY_CRYPTO(V)
 #endif
