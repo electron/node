@@ -243,11 +243,7 @@ def GetDefinition(var, source, step=30):
   return definition, len(code_points)
 
 
-def AddModule(filename, consts, macros, definitions, initializers):
-  code = ReadFile(filename)
-  code = ExpandConstants(code, consts)
-  code = ExpandMacros(code, macros)
-  name = NormalizeFileName(filename)
+def AddModule(name, code, definitions, initializers):
   slug = SLUGGER_RE.sub('_', name)
   var = slug + '_raw'
   definition, size = GetDefinition(var, code)
@@ -282,17 +278,21 @@ def JS2C(source_files, target):
   initializers = []
 
   for filename in source_files['.js']:
-    AddModule(filename, consts, macros, definitions, initializers)
+    code = ReadFile(filename)
+    code = ExpandConstants(code, consts)
+    code = ExpandMacros(code, macros)
+    name = NormalizeFileName(filename)
+    AddModule(name, code, definitions, initializers)
     # Electron: Expose fs module without asar support.
-    if filename == 'fs.js':
+    if filename == 'lib/fs.js':
       # Node's 'fs' and 'internal/fs/streams' have a lazy-loaded circular
       # dependency. So to expose the unmodified Node 'fs' functionality here,
       # we have to copy both 'fs' *and* 'internal/fs/streams' and modify the
       # copies to depend on each other instead of on our asarified 'fs' code.
       # See https://github.com/electron/electron/pull/16028 for more.
-      AddModule('original-fs', lines.replace("require('internal/fs/streams')", "require('original-fs/streams')"))
-    elif filename == 'internal/fs/streams.js':
-      AddModule('original-fs/streams', lines.replace("require('fs')", "require('original-fs')"))
+      AddModule('original-fs', code.replace("require('internal/fs/streams')", "require('original-fs/streams')"), definitions, initializers)
+    elif filename == 'lib/internal/fs/streams.js':
+      AddModule('original-fs/streams', code.replace("require('fs')", "require('original-fs')"), definitions, initializers)
 
   config_def, config_size = handle_config_gypi(source_files['config.gypi'])
   definitions.append(config_def)
