@@ -1,24 +1,27 @@
+import(
+    "//third_party/electron_node/tools/inspector_protocol/inspector_protocol.gni")
 import("//v8/gni/v8.gni")
 
 inspector_protocol_dir = "../../tools/inspector_protocol"
-
-_protocol_generated = [
-  "protocol/Forward.h",
-  "protocol/Protocol.cpp",
-  "protocol/Protocol.h",
-  "protocol/NodeWorker.cpp",
-  "protocol/NodeWorker.h",
-  "protocol/NodeTracing.cpp",
-  "protocol/NodeTracing.h",
-]
 
 # These are from node_protocol_config.json
 # These convoluted path hacks are to work around the fact that node.js is very
 # confused about what paths are in its includes, without changing node at all.
 # Hopefully, keying everything in this file off the paths that are in
 # node_protocol_config.json will mean that the paths stay in sync.
-inspector_protocol_package = "src/node/inspector/protocol"
 inspector_protocol_output = "node/inspector/protocol"
+
+_protocol_generated = [
+  "$inspector_protocol_output/Forward.h",
+  "$inspector_protocol_output/Protocol.cpp",
+  "$inspector_protocol_output/Protocol.h",
+  "$inspector_protocol_output/NodeWorker.cpp",
+  "$inspector_protocol_output/NodeWorker.h",
+  "$inspector_protocol_output/NodeTracing.cpp",
+  "$inspector_protocol_output/NodeTracing.h",
+  "$inspector_protocol_output/NodeRuntime.cpp",
+  "$inspector_protocol_output/NodeRuntime.h",
+]
 
 config("inspector_config") {
   include_dirs = [
@@ -35,6 +38,8 @@ source_set("inspector") {
     "main_thread_interface.h",
     "node_string.cc",
     "node_string.h",
+    "runtime_agent.cc",
+    "runtime_agent.h",
     "tracing_agent.cc",
     "tracing_agent.h",
     "worker_agent.cc",
@@ -42,9 +47,7 @@ source_set("inspector") {
     "worker_inspector.cc",
     "worker_inspector.h",
   ]
-  sources += rebase_path(_protocol_generated,
-                         ".",
-                         "$target_gen_dir/$inspector_protocol_package/..")
+  sources += rebase_path(_protocol_generated, ".", "$target_gen_dir/src")
   include_dirs = [
     "//v8/include",
     "..",
@@ -59,62 +62,17 @@ source_set("inspector") {
   public_configs = [ ":inspector_config" ]
 }
 
-# This based on the template from //v8/../inspector_protocol.gni
-action("protocol_generated_sources") {
-  # This is to ensure that the output directory exists--the code generator
-  # doesn't create it.
-  write_file("$target_gen_dir/$inspector_protocol_package/.dummy", "")
-  script = "$inspector_protocol_dir/code_generator.py"
-
+inspector_protocol_generate("protocol_generated_sources") {
+  inspector_protocol_dir = "$inspector_protocol_dir"
+  config_file = "node_protocol_config.json"
   inputs = [
-    "$target_gen_dir/node_protocol_config.json",
-    "$target_gen_dir/node_protocol.json",
-    "$inspector_protocol_dir/lib/base_string_adapter_cc.template",
-    "$inspector_protocol_dir/lib/base_string_adapter_h.template",
-    "$inspector_protocol_dir/lib/Allocator_h.template",
-    "$inspector_protocol_dir/lib/Array_h.template",
-    "$inspector_protocol_dir/lib/DispatcherBase_cpp.template",
-    "$inspector_protocol_dir/lib/DispatcherBase_h.template",
-    "$inspector_protocol_dir/lib/ErrorSupport_cpp.template",
-    "$inspector_protocol_dir/lib/ErrorSupport_h.template",
-    "$inspector_protocol_dir/lib/Forward_h.template",
-    "$inspector_protocol_dir/lib/FrontendChannel_h.template",
-    "$inspector_protocol_dir/lib/Maybe_h.template",
-    "$inspector_protocol_dir/lib/Object_cpp.template",
-    "$inspector_protocol_dir/lib/Object_h.template",
-    "$inspector_protocol_dir/lib/Parser_cpp.template",
-    "$inspector_protocol_dir/lib/Parser_h.template",
-    "$inspector_protocol_dir/lib/Protocol_cpp.template",
-    "$inspector_protocol_dir/lib/ValueConversions_h.template",
-    "$inspector_protocol_dir/lib/Values_cpp.template",
-    "$inspector_protocol_dir/lib/Values_h.template",
-    "$inspector_protocol_dir/templates/Exported_h.template",
-    "$inspector_protocol_dir/templates/Imported_h.template",
-    "$inspector_protocol_dir/templates/TypeBuilder_cpp.template",
-    "$inspector_protocol_dir/templates/TypeBuilder_h.template",
+    "$target_gen_dir/src/node_protocol.json",
   ]
-
+  outputs = _protocol_generated
+  out_dir = "$target_gen_dir/src"
   deps = [
-    ":node_protocol_config",
     ":node_protocol_json",
   ]
-
-  args = [
-    "--jinja_dir",
-    rebase_path("//third_party/", root_build_dir),  # jinja is in chromium's third_party
-    "--output_base",
-    rebase_path("$target_gen_dir/src", root_build_dir),
-    "--config",
-    rebase_path("$target_gen_dir/node_protocol_config.json", root_build_dir),
-  ]
-
-  outputs =
-      get_path_info(rebase_path(rebase_path(_protocol_generated,
-                                            ".",
-                                            "$inspector_protocol_output/.."),
-                                ".",
-                                "$target_gen_dir/src"),
-                    "abspath")
 }
 
 template("generate_protocol_json") {
@@ -137,21 +95,12 @@ template("generate_protocol_json") {
   }
 }
 
-copy("node_protocol_config") {
-  sources = [
-    "node_protocol_config.json",
-  ]
-  outputs = [
-    "$target_gen_dir/{{source_file_part}}",
-  ]
-}
-
 generate_protocol_json("node_protocol_json") {
   sources = [
     "node_protocol.pdl",
   ]
   outputs = [
-    "$target_gen_dir/node_protocol.json",
+    "$target_gen_dir/src/node_protocol.json",
   ]
 }
 
@@ -171,7 +120,7 @@ action("concatenate_protocols") {
   ]
   inputs = [
     "$target_gen_dir/js_protocol.json",
-    "$target_gen_dir/node_protocol.json",
+    "$target_gen_dir/src/node_protocol.json",
   ]
   outputs = [
     "$target_gen_dir/concatenated_protocol.json",
