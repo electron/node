@@ -6,15 +6,12 @@ if (!common.hasCrypto)
 
 const assert = require('assert');
 const {
-  constants,
   createSign,
   createVerify,
   generateKeyPair,
   generateKeyPairSync,
   publicEncrypt,
-  privateDecrypt,
-  sign,
-  verify
+  privateDecrypt
 } = require('crypto');
 const { promisify } = require('util');
 
@@ -43,24 +40,13 @@ function testEncryptDecrypt(publicKey, privateKey) {
 
 // Tests that a key pair can be used for signing / verification.
 function testSignVerify(publicKey, privateKey) {
-  const message = Buffer.from('Hello Node.js world!');
-
-  function oldSign(algo, data, key) {
-    return createSign(algo).update(data).sign(key);
-  }
-
-  function oldVerify(algo, data, key, signature) {
-    return createVerify(algo).update(data).verify(key, signature);
-  }
-
-  for (const signFn of [sign, oldSign]) {
-    const signature = signFn('SHA256', message, privateKey);
-    for (const verifyFn of [verify, oldVerify]) {
-      for (const key of [publicKey, privateKey]) {
-        const okay = verifyFn('SHA256', message, key, signature);
-        assert(okay);
-      }
-    }
+  const message = 'Hello Node.js world!';
+  const signature = createSign('SHA256').update(message)
+                                        .sign(privateKey, 'hex');
+  for (const key of [publicKey, privateKey]) {
+    const okay = createVerify('SHA256').update(message)
+                                       .verify(key, signature, 'hex');
+    assert(okay);
   }
 }
 
@@ -261,43 +247,6 @@ const sec1EncExp = (cipher) => getRegExpForPEM('EC PRIVATE KEY', cipher);
       passphrase: 'secret'
     };
     testEncryptDecrypt(publicKey, privateKey);
-    testSignVerify(publicKey, privateKey);
-  }));
-}
-
-{
-  // Test RSA-PSS.
-  generateKeyPair('rsa-pss', {
-    modulusLength: 512,
-    saltLength: 16,
-    hash: 'sha256',
-    mgf1Hash: 'sha256'
-  }, common.mustCall((err, publicKey, privateKey) => {
-    assert.ifError(err);
-
-    assert.strictEqual(publicKey.type, 'public');
-    assert.strictEqual(publicKey.asymmetricKeyType, 'rsa-pss');
-
-    assert.strictEqual(privateKey.type, 'private');
-    assert.strictEqual(privateKey.asymmetricKeyType, 'rsa-pss');
-
-    // Unlike RSA, RSA-PSS does not allow encryption.
-    assert.throws(() => {
-      testEncryptDecrypt(publicKey, privateKey);
-    }, /operation not supported for this keytype/);
-
-    // RSA-PSS also does not permit signing with PKCS1 padding.
-    assert.throws(() => {
-      testSignVerify({
-        key: publicKey,
-        padding: constants.RSA_PKCS1_PADDING
-      }, {
-        key: privateKey,
-        padding: constants.RSA_PKCS1_PADDING
-      });
-    }, /illegal or unsupported padding mode/);
-
-    // The padding should correctly default to RSA_PKCS1_PSS_PADDING now.
     testSignVerify(publicKey, privateKey);
   }));
 }
@@ -606,7 +555,9 @@ const sec1EncExp = (cipher) => getRegExpForPEM('EC PRIVATE KEY', cipher);
   common.expectsError(() => generateKeyPairSync('rsa2', {}), {
     type: TypeError,
     code: 'ERR_INVALID_ARG_VALUE',
-    message: "The argument 'type' must be a supported key type. Received 'rsa2'"
+    message: "The argument 'type' must be one of " +
+             "'rsa', 'dsa', 'ec', 'ed25519', 'ed448'," +
+             " 'x25519', 'x448'. Received 'rsa2'"
   });
 }
 
