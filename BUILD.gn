@@ -96,9 +96,7 @@ chdir_action("node_js2c") {
 
   cwd = "$target_gen_dir/js2c_inputs"
   script = "tools/js2c.py"
-  args = rebase_path(outputs)
-  args += library_files
-  args += rebase_path(macro_inputs + config_gypi)
+  args = library_files + rebase_path(macro_inputs + config_gypi) + ["--target"] + rebase_path(outputs)
 }
 
 config("node_features") {
@@ -113,6 +111,8 @@ config("node_features") {
   } else {
     defines += [ "HAVE_OPENSSL=0" ]
   }
+  # boringssl does not support SSL_trace, let's disable it
+  defines += ["OPENSSL_NO_SSL_TRACE=1"]
   if (v8_enable_i18n_support) {
     defines += [ "NODE_HAVE_I18N_SUPPORT=1" ]
   } else {
