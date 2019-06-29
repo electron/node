@@ -151,6 +151,22 @@ MaybeLocal<Function> NativeModuleEnv::LookupAndCompile(
   return maybe;
 }
 
+MaybeLocal<Value> NativeModuleEnv::CompileAndCall(
+    Local<Context> context,
+    const char* id,
+    std::vector<Local<String>>* parameters,
+    std::vector<Local<Value>>* arguments,
+    Environment* optional_env) {
+  Isolate* isolate = context->GetIsolate();
+  MaybeLocal<Function> compiled = LookupAndCompile(context, id, parameters, optional_env);
+  if (compiled.IsEmpty()) {
+    return MaybeLocal<Value>();
+  }
+  Local<Function> fn = compiled.ToLocalChecked().As<Function>();
+  return fn->Call(
+      context, v8::Null(isolate), arguments->size(), arguments->data());
+}
+
 // TODO(joyeecheung): It is somewhat confusing that Class::Initialize
 // is used to initialize to the binding, but it is the current convention.
 // Rename this across the code base to something that makes more sense.

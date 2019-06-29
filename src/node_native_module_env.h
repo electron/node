@@ -24,6 +24,17 @@ class NativeModuleEnv {
       const char* id,
       std::vector<v8::Local<v8::String>>* parameters,
       Environment* optional_env);
+  // Run a script with JS source bundled inside the binary as if it's wrapped
+  // in a function called with a null receiver and arguments specified in C++.
+  // The returned value is empty if an exception is encountered.
+  // JS code run with this method can assume that their top-level
+  // declarations won't affect the global scope.
+  static v8::MaybeLocal<v8::Value> CompileAndCall(
+      v8::Local<v8::Context> context,
+      const char* id,
+      std::vector<v8::Local<v8::String>>* parameters,
+      std::vector<v8::Local<v8::Value>>* arguments,
+      Environment* optional_env);
 
   static v8::Local<v8::Object> GetSourceObject(v8::Local<v8::Context> context);
   // Returns config.gypi as a JSON string
