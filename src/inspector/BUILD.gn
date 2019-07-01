@@ -156,7 +156,7 @@ generate_protocol_json("node_protocol_json") {
 
 generate_protocol_json("v8_protocol_json") {
   sources = [
-    "//v8/src/inspector/js_protocol.pdl",
+    "//v8/include/js_protocol.pdl",
   ]
   outputs = [
     "$target_gen_dir/js_protocol.json",
