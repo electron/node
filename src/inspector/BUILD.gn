@@ -10,6 +10,8 @@ _protocol_generated = [
   "protocol/NodeWorker.h",
   "protocol/NodeTracing.cpp",
   "protocol/NodeTracing.h",
+  "protocol/NodeRuntime.cpp",
+  "protocol/NodeRuntime.h"
 ]
 
 # These are from node_protocol_config.json
@@ -41,6 +43,8 @@ source_set("inspector") {
     "worker_agent.h",
     "worker_inspector.cc",
     "worker_inspector.h",
+    "runtime_agent.cc",
+    "runtime_agent.h",
   ]
   sources += rebase_path(_protocol_generated,
                          ".",
