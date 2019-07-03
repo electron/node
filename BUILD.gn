@@ -153,9 +153,6 @@ config("node_internal_config") {
   }
   if (is_component_build) {
     defines += [
-      "BUILDING_V8_SHARED",
-      "BUILDING_V8_PLATFORM_SHARED",
-      "BUILDING_V8_BASE_SHARED",
       "NODE_SHARED_MODE",
     ]
   }
