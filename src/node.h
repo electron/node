@@ -303,6 +303,14 @@ NODE_EXTERN v8::Local<v8::Context> NewContext(
     v8::Local<v8::ObjectTemplate> object_template =
         v8::Local<v8::ObjectTemplate>());
 
+// Runs Node.js-specific tweaks on an already constructed context
+// This is not dead code, it is exposed for embedders so that they
+// can construct their own context and still use it in a node Environment.
+NODE_EXTERN v8::Local<v8::Context> MaybeInitializeContext(
+    v8::Local<v8::Context> context,
+    v8::Local<v8::ObjectTemplate> object_template =
+        v8::Local<v8::ObjectTemplate>());
+
 // If `platform` is passed, it will be used to register new Worker instances.
 // It can be `nullptr`, in which case creating new Workers inside of
 // Environments that use this `IsolateData` will not work.
