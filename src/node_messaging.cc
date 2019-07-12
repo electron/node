@@ -118,6 +118,21 @@ MaybeLocal<Value> Message::Deserialize(Environment* env,
 
   // Attach all transfered ArrayBuffers to their new Isolate.
   for (uint32_t i = 0; i < array_buffer_contents_.size(); ++i) {
+    if (!env->isolate_data()->uses_node_allocator()) {
+      // We don't use Node's allocator on the receiving side, so we have
+      // to create the ArrayBuffer from a copy of the memory.
+      AllocatedBuffer buf =
+          env->AllocateManaged(array_buffer_contents_[i].size);
+      memcpy(buf.data(),
+             array_buffer_contents_[i].data,
+             array_buffer_contents_[i].size);
+      deserializer.TransferArrayBuffer(i, buf.ToArrayBuffer());
+      continue;
+    }
+
+    env->isolate_data()->node_allocator()->RegisterPointer(
+        array_buffer_contents_[i].data, array_buffer_contents_[i].size);
+
     Local<ArrayBuffer> ab =
         ArrayBuffer::New(env->isolate(),
                          array_buffer_contents_[i].release(),
@@ -164,12 +179,8 @@ void ThrowDataCloneException(Environment* env, Local<String> message) {
 // DeserializerDelegate understands how to unpack.
 class SerializerDelegate : public ValueSerializer::Delegate {
  public:
-  SerializerDelegate(
-    Environment* env,
-    Local<Context> context,
-    Message* m,
-    v8::ArrayBuffer::Allocator *allocator)
-    : env_(env), context_(context), msg_(m), allocator_(allocator) {}
+  SerializerDelegate(Environment* env, Local<Context> context, Message* m)
+      : env_(env), context_(context), msg_(m) {}
 
   void ThrowDataCloneError(Local<String> message) override {
     ThrowDataCloneException(env_, message);
@@ -205,19 +216,6 @@ class SerializerDelegate : public ValueSerializer::Delegate {
     return Just(i);
   }
 
-  void FreeBufferMemory(void* buffer) override {
-    // the second parameter is unused, so pass 0 as a filler
-    return allocator_->Free(buffer, 0);
-  }
-
-  void* ReallocateBufferMemory(void* old_buffer,
-                               size_t size,
-                               size_t* actual_size) override {
-    auto result = allocator_->Realloc(old_buffer, size);
-    *actual_size = result ? size :0;
-    return result;
-  }
-
   void Finish() {
     // Only close the MessagePort handles and actually transfer them
     // once we know that serialization succeeded.
@@ -247,7 +245,6 @@ class SerializerDelegate : public ValueSerializer::Delegate {
   Message* msg_;
   std::vector<Local<SharedArrayBuffer>> seen_shared_array_buffers_;
   std::vector<MessagePort*> ports_;
-  v8::ArrayBuffer::Allocator* allocator_;
 
   friend class worker::Message;
 };
@@ -265,7 +262,7 @@ Maybe<bool> Message::Serialize(Environment* env,
   // Verify that we're not silently overwriting an existing message.
   CHECK(main_message_buf_.is_empty());
 
-  SerializerDelegate delegate(env, context, this, env->isolate()->GetArrayBufferAllocator());
+  SerializerDelegate delegate(env, context, this);
   ValueSerializer serializer(env->isolate(), &delegate);
   delegate.serializer = &serializer;
 
@@ -282,8 +279,10 @@ Maybe<bool> Message::Serialize(Environment* env,
         Local<ArrayBuffer> ab = entry.As<ArrayBuffer>();
         // If we cannot render the ArrayBuffer unusable in this Isolate and
         // take ownership of its memory, copying the buffer will have to do.
-        if (!ab->IsNeuterable() || ab->IsExternal())
+        if (!ab->IsNeuterable() || ab->IsExternal() ||
+            !env->isolate_data()->uses_node_allocator()) {
           continue;
+        }
         // We simply use the array index in the `array_buffers` list as the
         // ID that we write into the serialized buffer.
         uint32_t id = array_buffers.size();
@@ -329,10 +328,14 @@ Maybe<bool> Message::Serialize(Environment* env,
     // it inaccessible in this Isolate.
     ArrayBuffer::Contents contents = ab->Externalize();
     ab->Neuter();
+
+    CHECK(env->isolate_data()->uses_node_allocator());
+    env->isolate_data()->node_allocator()->UnregisterPointer(
+        contents.Data(), contents.ByteLength());
+
     array_buffer_contents_.push_back(
         MallocedBuffer<char> { static_cast<char*>(contents.Data()),
-                               contents.ByteLength(),
-                               env->isolate()->GetArrayBufferAllocator() });
+                               contents.ByteLength() });
   }
 
   delegate.Finish();
@@ -340,7 +343,7 @@ Maybe<bool> Message::Serialize(Environment* env,
   // The serializer gave us a buffer allocated using `malloc()`.
   std::pair<uint8_t*, size_t> data = serializer.Release();
   main_message_buf_ =
-      MallocedBuffer<char>(reinterpret_cast<char*>(data.first), data.second, env->isolate()->GetArrayBufferAllocator());
+      MallocedBuffer<char>(reinterpret_cast<char*>(data.first), data.second);
   return Just(true);
 }
 

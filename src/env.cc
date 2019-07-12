@@ -13,6 +13,7 @@
 
 namespace node {
 
+using v8::ArrayBuffer;
 using v8::Context;
 using v8::FunctionTemplate;
 using v8::HandleScope;
@@ -36,11 +37,14 @@ void* Environment::kNodeContextTagPtr = const_cast<void*>(
 IsolateData::IsolateData(Isolate* isolate,
                          uv_loop_t* event_loop,
                          MultiIsolatePlatform* platform,
-                         uint32_t* zero_fill_field) :
-    isolate_(isolate),
-    event_loop_(event_loop),
-    zero_fill_field_(zero_fill_field),
-    platform_(platform) {
+                         ArrayBufferAllocator* node_allocator)
+    : isolate_(isolate),
+      event_loop_(event_loop),
+      allocator_(isolate->GetArrayBufferAllocator()),
+      node_allocator_(node_allocator),
+      uses_node_allocator_(allocator_ == node_allocator_),
+      platform_(platform) {
+  CHECK_NOT_NULL(allocator_);
   if (platform_ != nullptr)
     platform_->RegisterIsolate(isolate_, event_loop);
 
@@ -688,6 +692,23 @@ void Environment::BuildEmbedderGraph(v8::Isolate* isolate,
   });
 }
 
+char* Environment::Reallocate(char* data, size_t old_size, size_t size) {
+  // If we know that the allocator is our ArrayBufferAllocator, we can let
+  // if reallocate directly.
+  if (isolate_data()->uses_node_allocator()) {
+    return static_cast<char*>(
+        isolate_data()->node_allocator()->Reallocate(data, old_size, size));
+  }
+  // Generic allocators do not provide a reallocation method; we need to
+  // allocate a new chunk of memory and copy the data over.
+  char* new_data = AllocateUnchecked(size);
+  if (new_data == nullptr) return nullptr;
+  memcpy(new_data, data, std::min(size, old_size));
+  if (size > old_size)
+    memset(new_data + old_size, 0, size - old_size);
+  Free(data, old_size);
+  return new_data;
+}
 
 // Not really any better place than env.cc at this moment.
 void BaseObject::DeleteMe(void* data) {

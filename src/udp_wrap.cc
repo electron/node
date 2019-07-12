@@ -455,26 +455,20 @@ void UDPWrap::OnSend(uv_udp_send_t* req, int status) {
 void UDPWrap::OnAlloc(uv_handle_t* handle,
                       size_t suggested_size,
                       uv_buf_t* buf) {
-  auto* wrap = static_cast<UDPWrap*>(handle->data);
-  auto* allocator = wrap->env()->isolate()->GetArrayBufferAllocator();
-  buf->base =
-      static_cast<char*>(allocator->AllocateUninitialized(suggested_size));
-  buf->len = suggested_size;
+  UDPWrap* wrap = static_cast<UDPWrap*>(handle->data);
+  *buf = wrap->env()->AllocateManaged(suggested_size).release();
 }
-
 
 void UDPWrap::OnRecv(uv_udp_t* handle,
                      ssize_t nread,
-                     const uv_buf_t* buf,
+                     const uv_buf_t* buf_,
                      const struct sockaddr* addr,
                      unsigned int flags) {
   UDPWrap* wrap = static_cast<UDPWrap*>(handle->data);
   Environment* env = wrap->env();
-  auto* allocator = env->isolate()->GetArrayBufferAllocator();
 
+  AllocatedBuffer buf(env, *buf_);
   if (nread == 0 && addr == nullptr) {
-    if (buf->base != nullptr)
-      allocator->Free(buf->base, buf->len);
     return;
   }
 
@@ -490,16 +484,12 @@ void UDPWrap::OnRecv(uv_udp_t* handle,
   };
 
   if (nread < 0) {
-    if (buf->base != nullptr)
-      allocator->Free(buf->base, buf->len);
     wrap->MakeCallback(env->onmessage_string(), arraysize(argv), argv);
     return;
   }
 
-  // Note that nread may be smaller thant buf->len, in that case the length
-  // passed to ArrayBufferAllocator::Free would not be the correct one, but
-  // it should be fine unless embedder is using some unusual memory allocator.
-  argv[2] = Buffer::New(env, buf->base, nread).ToLocalChecked();
+  buf.Resize(nread);
+  argv[2] = buf.ToBuffer().ToLocalChecked();
   argv[3] = AddressToJS(env, addr);
   wrap->MakeCallback(env->onmessage_string(), arraysize(argv), argv);
 }
