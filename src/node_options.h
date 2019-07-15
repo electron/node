@@ -44,7 +44,7 @@ class HostPort {
   int port_;
 };
 
-class Options {
+class NODE_EXTERN Options {
  public:
   virtual void CheckOptions(std::vector<std::string>* errors) {}
   virtual ~Options() = default;
@@ -427,7 +427,7 @@ class NODE_EXTERN DebugOptionsParser : public OptionsParser<DebugOptions> {
 
 using StringVector = std::vector<std::string>;
 template <class OptionsType, class = Options>
-void Parse(
+void NODE_EXTERN Parse(
   StringVector* const args, StringVector* const exec_args,
   StringVector* const v8_args, OptionsType* const options,
   OptionEnvvarSettings required_env_settings, StringVector* const errors);

@@ -12,7 +12,7 @@ namespace native_module {
 
 extern const bool has_code_cache;
 
-class NativeModuleEnv {
+class NODE_EXTERN NativeModuleEnv {
  public:
   static void Initialize(v8::Local<v8::Object> target,
                          v8::Local<v8::Value> unused,
