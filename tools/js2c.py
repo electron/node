@@ -245,8 +245,8 @@ def GetDefinition(var, source, step=30):
   return definition, len(code_points)
 
 
-def AddModule(filename, consts, macros, definitions, initializers):
-  code = ReadFile(filename)
+def AddModule(filename, consts, macros, definitions, initializers, FileReadFn=ReadFile):
+  code = FileReadFn(filename)
   code = ExpandConstants(code, consts)
   code = ExpandMacros(code, macros)
   name = NormalizeFileName(filename)
@@ -286,15 +286,15 @@ def JS2C(source_files, target, only_js):
   for filename in source_files['.js']:
     AddModule(filename, consts, macros, definitions, initializers)
     # Electron: Expose fs module without asar support.
-    if filename == 'fs.js':
+    if filename == 'lib/fs.js':
       # Node's 'fs' and 'internal/fs/streams' have a lazy-loaded circular
       # dependency. So to expose the unmodified Node 'fs' functionality here,
       # we have to copy both 'fs' *and* 'internal/fs/streams' and modify the
       # copies to depend on each other instead of on our asarified 'fs' code.
       # See https://github.com/electron/electron/pull/16028 for more.
-      AddModule('original-fs', lines.replace("require('internal/fs/streams')", "require('original-fs/streams')"))
+      AddModule('lib/original-fs.js', consts, macros, definitions, initializers, lambda _: ReadFile(filename).replace("require('internal/fs/streams')", "require('internal/original-fs/streams')"))
     elif filename == 'internal/fs/streams.js':
-      AddModule('original-fs/streams', lines.replace("require('fs')", "require('original-fs')"))
+      AddModule('lib/internal/original-fs/streams.js', consts, macros, definitions, initializers, lambda _: ReadFile(filename).replace("require('fs')", "require('original-fs')"))
 
   config_size = 0
   if not only_js:
