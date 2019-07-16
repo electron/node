@@ -293,7 +293,7 @@ def JS2C(source_files, target, only_js):
       # copies to depend on each other instead of on our asarified 'fs' code.
       # See https://github.com/electron/electron/pull/16028 for more.
       AddModule('lib/original-fs.js', consts, macros, definitions, initializers, lambda _: ReadFile(filename).replace("require('internal/fs/streams')", "require('internal/original-fs/streams')"))
-    elif filename == 'internal/fs/streams.js':
+    elif filename == 'lib/internal/fs/streams.js':
       AddModule('lib/internal/original-fs/streams.js', consts, macros, definitions, initializers, lambda _: ReadFile(filename).replace("require('fs')", "require('original-fs')"))
 
   config_size = 0
