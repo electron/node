@@ -323,6 +323,14 @@ bool EntropySource(unsigned char* buffer, size_t length) {
 }
 
 
+template <typename T>
+static T* MallocOpenSSL(size_t count) {
+  void* mem = OPENSSL_malloc(MultiplyWithOverflowCheck(count, sizeof(T)));
+  CHECK_IMPLIES(mem == nullptr, count == 0);
+  return static_cast<T*>(mem);
+}
+
+
 void SecureContext::Initialize(Environment* env, Local<Object> target) {
   Local<FunctionTemplate> t = env->NewFunctionTemplate(New);
   t->InstanceTemplate()->SetInternalFieldCount(1);
@@ -1556,6 +1564,28 @@ static void AddFingerprintDigest(const unsigned char* md,
   }
 }
 
+
+static MaybeLocal<Object> ECPointToBuffer(Environment* env,
+                                          const EC_GROUP* group,
+                                          const EC_POINT* point,
+                                          point_conversion_form_t form,
+                                          const char** error) {
+  size_t len = EC_POINT_point2oct(group, point, form, nullptr, 0, nullptr);
+  if (len == 0) {
+    if (error != nullptr) *error = "Failed to get public key length";
+    return MaybeLocal<Object>();
+  }
+  MallocedBuffer<unsigned char> buf(len,
+                                    env->isolate()->GetArrayBufferAllocator());
+  len = EC_POINT_point2oct(group, point, form, buf.data, buf.size, nullptr);
+  if (len == 0) {
+    if (error != nullptr) *error = "Failed to get public key";
+    return MaybeLocal<Object>();
+  }
+  return Buffer::New(env, reinterpret_cast<char*>(buf.release()), len);
+}
+
+
 static Local<Object> X509ToObject(Environment* env, X509* cert) {
   EscapableHandleScope scope(env->isolate());
   Local<Context> context = env->context();
@@ -2334,12 +2364,11 @@ int SSLWrap<Base>::TLSExtStatusCallback(SSL* s, void* arg) {
     size_t len = Buffer::Length(obj);
 
     // OpenSSL takes control of the pointer after accepting it
-    auto* allocator = env->isolate()->GetArrayBufferAllocator();
-    uint8_t* data = static_cast<uint8_t*>(allocator->AllocateUninitialized(len));
+    unsigned char* data = MallocOpenSSL<unsigned char>(len);
     memcpy(data, resp, len);
 
     if (!SSL_set_tlsext_status_ocsp_resp(s, data, len))
-      allocator->Free(data, len);
+      OPENSSL_free(data);
     w->ocsp_response_.Reset();
 
     return SSL_TLSEXT_ERR_OK;
@@ -4472,31 +4501,19 @@ void ECDH::GetPublicKey(const FunctionCallbackInfo<Value>& args) {
   ECDH* ecdh;
   ASSIGN_OR_RETURN_UNWRAP(&ecdh, args.Holder());
 
+  const EC_GROUP* group = EC_KEY_get0_group(ecdh->key_.get());
   const EC_POINT* pub = EC_KEY_get0_public_key(ecdh->key_.get());
   if (pub == nullptr)
     return env->ThrowError("Failed to get ECDH public key");
 
-  int size;
   CHECK(args[0]->IsUint32());
   uint32_t val = args[0].As<Uint32>()->Value();
   point_conversion_form_t form = static_cast<point_conversion_form_t>(val);
 
-  size = EC_POINT_point2oct(ecdh->group_, pub, form, nullptr, 0, nullptr);
-  if (size == 0)
-    return env->ThrowError("Failed to get public key length");
-
-  auto* allocator = env->isolate()->GetArrayBufferAllocator();
-  unsigned char* out =
-      static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
-
-  int r = EC_POINT_point2oct(ecdh->group_, pub, form, out, size, nullptr);
-  if (r != size) {
-    allocator->Free(out, size);
-    return env->ThrowError("Failed to get public key");
-  }
-
-  Local<Object> buf =
-      Buffer::New(env, reinterpret_cast<char*>(out), size).ToLocalChecked();
+  const char* error;
+  Local<Object> buf;
+  if (!ECPointToBuffer(env, group, pub, form, &error).ToLocal(&buf))
+    return env->ThrowError(error);
   args.GetReturnValue().Set(buf);
 }
 
@@ -5103,24 +5120,10 @@ void ConvertKey(const FunctionCallbackInfo<Value>& args) {
   uint32_t val = args[2].As<Uint32>()->Value();
   point_conversion_form_t form = static_cast<point_conversion_form_t>(val);
 
-  int size = EC_POINT_point2oct(
-      group.get(), pub.get(), form, nullptr, 0, nullptr);
-
-  if (size == 0)
-    return env->ThrowError("Failed to get public key length");
-
-  auto* allocator = env->isolate()->GetArrayBufferAllocator();
-  unsigned char* out =
-      static_cast<unsigned char*>(allocator->AllocateUninitialized(size));
-
-  int r = EC_POINT_point2oct(group.get(), pub.get(), form, out, size, nullptr);
-  if (r != size) {
-    allocator->Free(out, size);
-    return env->ThrowError("Failed to get public key");
-  }
-
-  Local<Object> buf =
-      Buffer::New(env, reinterpret_cast<char*>(out), size).ToLocalChecked();
+  const char* error;
+  Local<Object> buf;
+  if (!ECPointToBuffer(env, group.get(), pub.get(), form, &error).ToLocal(&buf))
+    return env->ThrowError(error);
   args.GetReturnValue().Set(buf);
 }
 
